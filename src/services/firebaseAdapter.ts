@@ -21,6 +21,7 @@ import {
 } from 'firebase/firestore';
 import { sanitizeCpf } from '../lib/cpf';
 import { calculateRefundsOnClose } from '../lib/equity';
+import { canManageTickets } from '../lib/phases';
 import { generateParticipantTxid } from '../lib/pix';
 import {
   buildMagicLinkReturnUrl,
@@ -652,6 +653,12 @@ export function createFirebaseDataService(): DataService {
     },
 
     async updateParticipantTicketInfo(uid, input, actorEmail) {
+      const pub = await this.getPublicConfig();
+      if (!canManageTickets(pub.currentPhase)) {
+        throw new Error(
+          'Só é possível assinalar cotas do bilhete e marcar entrega em mãos após avançar a timeline para "Aposta feita".'
+        );
+      }
       const user = await this.getUserProfile(uid);
       if (!user) return;
       const details: string[] = [];

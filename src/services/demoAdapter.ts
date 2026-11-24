@@ -1,5 +1,6 @@
 import { sanitizeCpf } from '../lib/cpf';
 import { calculateRefundsOnClose } from '../lib/equity';
+import { canManageTickets } from '../lib/phases';
 import { generateParticipantTxid } from '../lib/pix';
 import {
   clearAllSessionArtifacts,
@@ -798,6 +799,11 @@ export function createDemoDataService(): DataService {
 
     async updateParticipantTicketInfo(uid, input, actorEmail) {
       const state = loadState();
+      if (!canManageTickets(state.publicConfig.currentPhase)) {
+        throw new Error(
+          'Só é possível assinalar cotas do bilhete e marcar entrega em mãos após avançar a timeline para "Aposta feita".'
+        );
+      }
       const user = state.users[uid];
       if (!user) return;
       const details: string[] = [];

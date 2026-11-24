@@ -39,12 +39,19 @@ import {
   formatOneIn,
   parseLotteryNumbers,
 } from '../lib/lottery';
+import {
+  canManageTickets,
+  getPhaseIndex,
+  getPhaseMeta,
+  POOL_PHASES,
+} from '../lib/phases';
 import { buildInviteShareUrl } from '../lib/session';
 import { dataService } from '../services';
 import type {
   AdminConfig,
   EmailActionType,
   PaymentConfig,
+  PoolPhase,
   PublicConfig,
   StageToggles,
   UserProfile,
@@ -442,6 +449,29 @@ export function AdminPage() {
     await dataService.updatePublicConfig(next, actorEmail);
     await refreshAll();
     showToast('success', 'Etapa atualizada com sucesso!');
+  }
+
+  async function handleSetPhase(phase: PoolPhase) {
+    const meta = getPhaseMeta(phase);
+    const next: PublicConfig = {
+      ...pubForm,
+      currentPhase: phase,
+    };
+    setPubForm(next);
+    setBusyId('set_phase');
+    try {
+      await dataService.updatePublicConfig(next, actorEmail);
+      await dataService.recordAuditEvent(
+        'Fase da timeline alterada',
+        actorEmail,
+        publicConfig.poolName,
+        `Evolução marcada para: ${meta.label}`
+      );
+      await refreshAll();
+      showToast('success', `Timeline atualizada para: ${meta.label}!`);
+    } finally {
+      setBusyId(null);
+    }
   }
 
   async function handleSaveBanner(e: React.FormEvent) {
@@ -969,93 +999,126 @@ export function AdminPage() {
                         )}
                       </td>
                       <td>
-                        <div className="stack-xs" style={{ minWidth: 170 }}>
-                          <div className="row" style={{ gap: 4 }}>
-                            <input
-                              type="text"
-                              className="input mono"
+                        {!canManageTickets(publicConfig.currentPhase) ? (
+                          <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', maxWidth: 165 }}>
+                            <span
                               style={{
-                                padding: '5px 8px',
-                                fontSize: '0.78rem',
-                                flex: 1,
-                                minWidth: 92,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                fontWeight: 600,
                               }}
-                              placeholder="Ex.: #14, #52"
-                              value={
-                                ticketDrafts[u.uid] !== undefined
-                                  ? ticketDrafts[u.uid]
-                                  : u.assignedTicketNumbers || ''
-                              }
-                              onChange={(e) =>
-                                setTicketDrafts((prev) => ({
-                                  ...prev,
-                                  [u.uid]: e.target.value,
-                                }))
-                              }
-                              aria-label={`Número da cota do bilhete de ${u.displayName}`}
-                            />
-                            <button
-                              type="button"
-                              className="btn btn-secondary btn-sm"
-                              style={{ padding: '5px 8px' }}
-                              disabled={busyId === u.uid}
-                              onClick={async () => {
-                                const val =
+                            >
+                              <Lock size={12} />
+                              Aguardando “Aposta feita”
+                            </span>
+                            <div style={{ marginTop: 2 }}>
+                              Avance a timeline em <em>Etapas</em> para liberar.
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="stack-xs" style={{ minWidth: 170 }}>
+                            <div className="row" style={{ gap: 4 }}>
+                              <input
+                                type="text"
+                                className="input mono"
+                                style={{
+                                  padding: '5px 8px',
+                                  fontSize: '0.78rem',
+                                  flex: 1,
+                                  minWidth: 92,
+                                }}
+                                placeholder="Ex.: #14, #52"
+                                value={
                                   ticketDrafts[u.uid] !== undefined
                                     ? ticketDrafts[u.uid]
-                                    : u.assignedTicketNumbers || '';
+                                    : u.assignedTicketNumbers || ''
+                                }
+                                onChange={(e) =>
+                                  setTicketDrafts((prev) => ({
+                                    ...prev,
+                                    [u.uid]: e.target.value,
+                                  }))
+                                }
+                                aria-label={`Número da cota do bilhete de ${u.displayName}`}
+                              />
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: '5px 8px' }}
+                                disabled={busyId === u.uid}
+                                onClick={async () => {
+                                  const val =
+                                    ticketDrafts[u.uid] !== undefined
+                                      ? ticketDrafts[u.uid]
+                                      : u.assignedTicketNumbers || '';
+                                  setBusyId(u.uid);
+                                  try {
+                                    await dataService.updateParticipantTicketInfo(
+                                      u.uid,
+                                      { assignedTicketNumbers: val },
+                                      actorEmail
+                                    );
+                                    await refreshAll();
+                                    showToast(
+                                      'success',
+                                      `Nº da cota do bilhete salvo para ${u.displayName}.`
+                                    );
+                                  } catch (err) {
+                                    showToast(
+                                      'danger',
+                                      err instanceof Error
+                                        ? err.message
+                                        : 'Erro ao salvar nº do bilhete.'
+                                    );
+                                  } finally {
+                                    setBusyId(null);
+                                  }
+                                }}
+                                title="Salvar nº da cota no bilhete"
+                              >
+                                <Save size={13} />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              className={`btn btn-sm ${u.receiptDelivered ? 'btn-primary' : 'btn-secondary'}`}
+                              style={{ padding: '4px 9px', fontSize: '0.76rem' }}
+                              disabled={busyId === u.uid}
+                              onClick={async () => {
                                 setBusyId(u.uid);
                                 try {
                                   await dataService.updateParticipantTicketInfo(
                                     u.uid,
-                                    { assignedTicketNumbers: val },
+                                    { receiptDelivered: !u.receiptDelivered },
                                     actorEmail
                                   );
                                   await refreshAll();
                                   showToast(
                                     'success',
-                                    `Nº da cota do bilhete salvo para ${u.displayName}.`
+                                    !u.receiptDelivered
+                                      ? `Comprovante de ${u.displayName} marcado como entregue em mãos!`
+                                      : `Entrega em mãos de ${u.displayName} desmarcada.`
+                                  );
+                                } catch (err) {
+                                  showToast(
+                                    'danger',
+                                    err instanceof Error
+                                      ? err.message
+                                      : 'Erro ao atualizar entrega.'
                                   );
                                 } finally {
                                   setBusyId(null);
                                 }
                               }}
-                              title="Salvar nº da cota no bilhete"
                             >
-                              <Save size={13} />
+                              <CheckCircle2 size={12} />
+                              {u.receiptDelivered
+                                ? 'Entregue em mãos ✓'
+                                : 'Marcar entregue em mãos'}
                             </button>
                           </div>
-                          <button
-                            type="button"
-                            className={`btn btn-sm ${u.receiptDelivered ? 'btn-primary' : 'btn-secondary'}`}
-                            style={{ padding: '4px 9px', fontSize: '0.76rem' }}
-                            disabled={busyId === u.uid}
-                            onClick={async () => {
-                              setBusyId(u.uid);
-                              try {
-                                await dataService.updateParticipantTicketInfo(
-                                  u.uid,
-                                  { receiptDelivered: !u.receiptDelivered },
-                                  actorEmail
-                                );
-                                await refreshAll();
-                                showToast(
-                                  'success',
-                                  !u.receiptDelivered
-                                    ? `Comprovante de ${u.displayName} marcado como entregue em mãos!`
-                                    : `Entrega em mãos de ${u.displayName} desmarcada.`
-                                );
-                              } finally {
-                                setBusyId(null);
-                              }
-                            }}
-                          >
-                            <CheckCircle2 size={12} />
-                            {u.receiptDelivered
-                              ? 'Entregue em mãos ✓'
-                              : 'Marcar entregue em mãos'}
-                          </button>
-                        </div>
+                        )}
                       </td>
                       <td>
                         <div className="row" style={{ gap: 5 }}>
@@ -1174,8 +1237,107 @@ export function AdminPage() {
 
       {/* ABA 2: ETAPAS & FECHAMENTO */}
       {activeTab === 'stages' && (
-        <div className="grid-2">
-          <section className="card stack-md">
+        <div className="stack-md">
+          <section className="card stack-md" id="admin-timeline-controller">
+            <div className="row-between">
+              <div>
+                <h2>Controlador da Timeline (Evolução do Bolão)</h2>
+                <p style={{ color: 'var(--ink-secondary)', fontSize: '0.9rem' }}>
+                  Marque em qual fase o {publicConfig.poolName} está agora. A
+                  atribuição de nº de cotas do bilhete e entrega em mãos só é
+                  liberada a partir de <strong>Aposta feita</strong>.
+                </p>
+              </div>
+              <span
+                className={`badge ${canManageTickets(publicConfig.currentPhase) ? 'badge-success' : 'badge-warning'}`}
+              >
+                {canManageTickets(publicConfig.currentPhase)
+                  ? 'Bilhetes / Entrega liberados'
+                  : 'Bilhetes bloqueados até Aposta feita'}
+              </span>
+            </div>
+
+            <div className="phase-selector-grid">
+              {POOL_PHASES.map((phase, idx) => {
+                const activeIdx = getPhaseIndex(publicConfig.currentPhase);
+                const cls =
+                  idx < activeIdx
+                    ? 'past'
+                    : idx === activeIdx
+                      ? 'active'
+                      : '';
+                return (
+                  <button
+                    key={phase.id}
+                    type="button"
+                    className={`phase-btn ${cls}`}
+                    disabled={busyId === 'set_phase'}
+                    onClick={() => handleSetPhase(phase.id)}
+                    id={`btn-phase-${phase.id}`}
+                  >
+                    <span className="phase-btn-step">
+                      {idx < activeIdx
+                        ? `✓ Etapa ${idx + 1}`
+                        : idx === activeIdx
+                          ? `● Agora (Etapa ${idx + 1})`
+                          : `Etapa ${idx + 1}`}
+                    </span>
+                    <span className="phase-btn-title">{phase.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="row-between">
+              <span className="field-hint">
+                Fase atual:{' '}
+                <strong>{getPhaseMeta(publicConfig.currentPhase).label}</strong>{' '}
+                — {getPhaseMeta(publicConfig.currentPhase).description}
+              </span>
+              <div className="row" style={{ gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  disabled={
+                    busyId === 'set_phase' ||
+                    getPhaseIndex(publicConfig.currentPhase) <= 0
+                  }
+                  onClick={() => {
+                    const prevIdx =
+                      getPhaseIndex(publicConfig.currentPhase) - 1;
+                    if (prevIdx >= 0) {
+                      void handleSetPhase(POOL_PHASES[prevIdx].id);
+                    }
+                  }}
+                  id="btn-phase-prev"
+                >
+                  Voltar fase
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  disabled={
+                    busyId === 'set_phase' ||
+                    getPhaseIndex(publicConfig.currentPhase) >=
+                      POOL_PHASES.length - 1
+                  }
+                  onClick={() => {
+                    const nextIdx =
+                      getPhaseIndex(publicConfig.currentPhase) + 1;
+                    if (nextIdx < POOL_PHASES.length) {
+                      void handleSetPhase(POOL_PHASES[nextIdx].id);
+                    }
+                  }}
+                  id="btn-phase-next"
+                >
+                  Avançar para próxima fase
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <div className="grid-2">
+            <section className="card stack-md">
             <div>
               <h2>Habilitar / Desabilitar Etapas e Submissões</h2>
               <p style={{ color: 'var(--ink-secondary)', fontSize: '0.9rem' }}>
@@ -1339,6 +1501,7 @@ export function AdminPage() {
               )}
             </div>
           </section>
+          </div>
         </div>
       )}
 

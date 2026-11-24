@@ -13,12 +13,23 @@ export interface StageToggles {
   poolClosed: boolean;
 }
 
+export type PoolPhase =
+  | 'registration'
+  | 'registration_closed'
+  | 'consolidating_payments'
+  | 'bet_placed'
+  | 'delivering_tickets'
+  | 'draw'
+  | 'claiming_prize'
+  | 'retired';
+
 export interface PublicConfig {
   poolName: string;
   edition: string;
-  quotaPrice: number; // em reais (ex: 30)
+  quotaPrice: number; // em reais (ex: 40.32)
   totalQuotas: number; // padrão: 100
   maxQuotasPerPerson: number; // padrão: 3
+  currentPhase: PoolPhase; // estágio atual da evolução do bolão
   registrationDeadline: string; // data limite para registro (ex: "2026-12-18")
   paymentDeadline: string; // data limite para pagamento PIX (ex: "2026-12-22")
   betPlacementDate: string; // data de realizar a aposta na lotérica (ex: "2026-12-28")

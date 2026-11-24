@@ -1,9 +1,11 @@
 import { Lock, Megaphone, Sparkles } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { getPhaseMeta } from '../lib/phases';
 
 export function StatusBanner() {
   const { publicConfig } = useApp();
   const { flags, bannerMessage } = publicConfig;
+  const phaseMeta = getPhaseMeta(publicConfig.currentPhase);
 
   return (
     <div className="status-banner" role="region" aria-label="Status do bolão">
@@ -22,6 +24,10 @@ export function StatusBanner() {
         </div>
 
         <div className="stage-chips">
+          <span className="badge badge-unicorn">
+            <Sparkles size={12} />
+            Fase: {phaseMeta.label}
+          </span>
           <span
             className={`badge ${flags.registrationsOpen ? 'badge-success' : 'badge-neutral'}`}
           >
@@ -32,12 +38,6 @@ export function StatusBanner() {
           >
             PIX: {flags.pixPaymentOpen ? 'Liberado' : 'Pausado'}
           </span>
-          {flags.poolClosed && (
-            <span className="badge badge-unicorn">
-              <Sparkles size={12} />
-              Rateio Final
-            </span>
-          )}
         </div>
       </div>
     </div>

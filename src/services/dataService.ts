@@ -126,6 +126,7 @@ export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
   quotaPrice: 40.32,
   totalQuotas: 100,
   maxQuotasPerPerson: 3,
+  currentPhase: 'registration',
   registrationDeadline: '2026-12-18',
   paymentDeadline: '2026-12-22',
   betPlacementDate: '2026-12-28',

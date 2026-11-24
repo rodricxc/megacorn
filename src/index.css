@@ -1000,6 +1000,58 @@ a:hover {
   padding: 12px 13px;
 }
 
+.phase-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.phase-btn {
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--ink-primary);
+  font-family: var(--font-body);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: all 0.15s ease;
+}
+
+.phase-btn:hover {
+  border-color: var(--corn-600);
+  background: var(--bg-subtle);
+}
+
+.phase-btn.past {
+  background: var(--bg-mint);
+  border-color: hsl(154, 42%, 78%);
+}
+
+.phase-btn.active {
+  background: var(--bg-gold-soft);
+  border-color: var(--corn-600);
+  box-shadow: 0 4px 14px -6px hsla(42, 95%, 40%, 0.55);
+}
+
+.phase-btn-step {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
+
+.phase-btn-title {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+}
+
 /* Footer */
 .footer {
   border-top: 1px solid var(--border-subtle);
@@ -1016,6 +1068,7 @@ a:hover {
   .grid-3,
   .grid-4,
   .timeline,
+  .phase-selector-grid,
   .pix-layout {
     grid-template-columns: 1fr;
   }
