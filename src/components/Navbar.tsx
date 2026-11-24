@@ -34,7 +34,7 @@ export function Navbar() {
               <span className="badge badge-warning">{publicConfig.edition}</span>
             </span>
             <span className="brand-sub">
-              Bolão de Fim de Ano • Milho, Unicórnio &amp; Sorte
+              Bolão de Fim de Ano • Unicorn
             </span>
           </span>
         </Link>

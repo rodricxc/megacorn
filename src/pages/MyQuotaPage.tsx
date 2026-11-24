@@ -149,7 +149,7 @@ export function MyQuotaPage() {
                   type="text"
                   required
                   className="input mono"
-                  placeholder="Ex.: MEGACORN2026"
+                  placeholder="Ex.: MEGACORN2027"
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                 />

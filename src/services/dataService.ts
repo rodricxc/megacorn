@@ -117,7 +117,7 @@ export interface DataService {
 
 export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
   poolName: 'MegaCorn',
-  edition: '2026',
+  edition: '2027',
   quotaPrice: 35,
   totalQuotas: 100,
   maxQuotasPerPerson: 3,
@@ -153,5 +153,5 @@ export const DEFAULT_ADMIN_CONFIG: AdminConfig = {
   appsScriptUrl: '',
   appsScriptSecret: '',
   moderatorEmails: ['organizador@megacorn.demo'],
-  activeInviteCode: 'MEGACORN2026',
+  activeInviteCode: 'MEGACORN2027',
 };

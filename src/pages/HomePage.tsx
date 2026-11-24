@@ -249,7 +249,7 @@ export function HomePage() {
                     type="text"
                     required
                     className="input mono"
-                    placeholder="Ex.: MEGACORN2026"
+                    placeholder="Ex.: MEGACORN2027"
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                   />
@@ -345,7 +345,7 @@ export function HomePage() {
               <div className="card-unicorn stack-sm" id="demo-quick-panel">
                 <div className="row-between">
                   <strong>Acesso rápido — Modo Demo</strong>
-                  <span className="badge badge-unicorn">Convite: MEGACORN2026</span>
+                  <span className="badge badge-unicorn">Convite: MEGACORN2027</span>
                 </div>
                 <p style={{ fontSize: '0.84rem', color: 'var(--ink-secondary)' }}>
                   Teste a aplicação agora mesmo com um perfil pronto ou entre com
