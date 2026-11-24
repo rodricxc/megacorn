@@ -120,9 +120,10 @@ export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
   edition: '2026',
   quotaPrice: 35,
   totalQuotas: 100,
-  maxQuotasPerPerson: 5,
+  maxQuotasPerPerson: 3,
   registrationDeadline: '2026-12-18',
   paymentDeadline: '2026-12-22',
+  betPlacementDate: '2026-12-28',
   drawDate: '2026-12-31',
   bannerMessage:
     'Inscrições e PIX abertos! Garanta sua espiga da sorte antes do fechamento.',

@@ -3,17 +3,20 @@ import {
   Calendar,
   Clover,
   Coins,
+  HelpCircle,
   Lock,
   Scale,
   ShieldCheck,
   Undo2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Timeline } from '../components/Timeline';
 import { useApp } from '../context/AppContext';
 import { formatCurrencyBr, formatDateBr } from '../lib/appsScript';
 
 export function RulesPage() {
   const { authUser, publicConfig } = useApp();
+  const maxPoolBudget = publicConfig.totalQuotas * publicConfig.quotaPrice;
 
   return (
     <div className="container stack-lg">
@@ -26,7 +29,8 @@ export function RulesPage() {
             <h1>Regras e Funcionamento — {publicConfig.poolName}</h1>
             <p style={{ color: 'var(--ink-secondary)', maxWidth: '64ch' }}>
               Tudo o que você precisa saber sobre cotas, prioridade por equidade,
-              pagamento via PIX, estornos e privacidade antes de participar.
+              cronograma, pagamento via PIX, estornos e privacidade antes de
+              participar.
             </p>
           </div>
           <Link
@@ -65,6 +69,79 @@ export function RulesPage() {
         </div>
       </div>
 
+      {/* Cronograma / Timeline completa */}
+      <section className="card stack-md" id="rules-timeline-section">
+        <div className="row" style={{ gap: 10 }}>
+          <Calendar size={22} color="var(--luck-500)" />
+          <div>
+            <h2>Linha do Tempo do Bolão</h2>
+            <p style={{ color: 'var(--ink-secondary)', fontSize: '0.9rem' }}>
+              Fique atento às datas limite de registro, pagamento PIX, registro
+              das apostas na lotérica e sorteio oficial.
+            </p>
+          </div>
+        </div>
+        <Timeline config={publicConfig} />
+      </section>
+
+      {/* Por que essas regras? (Transparência da organização) */}
+      <section className="card stack-md" id="rules-rationale-section">
+        <div className="row" style={{ gap: 10 }}>
+          <HelpCircle size={22} color="var(--corn-600)" />
+          <div>
+            <h2>Por que esses limites e esse valor de cota?</h2>
+            <p style={{ color: 'var(--ink-secondary)', fontSize: '0.9rem' }}>
+              Entenda os motivos práticos e regulamentares por trás das regras
+              do {publicConfig.poolName}.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid-3">
+          <div className="card-gold stack-xs">
+            <h3>Por que o limite de {publicConfig.totalQuotas} cotas?</h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--ink-secondary)' }}>
+              Nas regras oficiais do <strong>Bolão Caixa</strong> para a
+              Mega-Sena / Mega da Virada, o limite máximo regulamentar é de{' '}
+              <strong>100 cotas por bolão</strong> (com recibo individual por
+              cota). Manter o teto em 100 cotas garante total aderência à regra
+              oficial da lotérica, simplifica a divisão dos prêmios e dá espaço
+              para todo o time participar com equidade.
+            </p>
+          </div>
+
+          <div className="card-mint stack-xs">
+            <h3>
+              Por que {formatCurrencyBr(publicConfig.quotaPrice)} por cota?
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--ink-secondary)' }}>
+              O valor busca equilibrar <strong>acessibilidade</strong> (para
+              ninguém ficar de fora) com <strong>poder de aposta</strong>: com{' '}
+              {publicConfig.totalQuotas} cotas, formamos um caixa de até{' '}
+              <strong>{formatCurrencyBr(maxPoolBudget)}</strong>, suficiente
+              para registrar <strong>apostas múltiplas estratégicas</strong> (7
+              a 10+ dezenas por volante, multiplicando em centenas de vezes as
+              chances contra um jogo simples) — sempre acima do valor mínimo por
+              cota exigido pela Caixa.
+            </p>
+          </div>
+
+          <div className="card-unicorn stack-xs">
+            <h3>
+              Por que até {publicConfig.maxQuotasPerPerson} cotas por pessoa?
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--ink-secondary)' }}>
+              O teto padrão de{' '}
+              <strong>{publicConfig.maxQuotasPerPerson} cotas por pessoa</strong>{' '}
+              permite a quem quiser investir um pouco mais aumentar sua
+              participação sem concentrar cotas em poucas pessoas — preservando
+              o espírito coletivo do bolão e reduzindo a chance de estornos no
+              fechamento.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <div className="grid-2">
         <section className="card stack-sm">
           <div className="row" style={{ gap: 10 }}>
@@ -94,7 +171,7 @@ export function RulesPage() {
               aprovado e pago garante primeiro a sua <strong>1ª cota</strong>.
             </li>
             <li>
-              <strong>Camadas 2, 3, 4... (Extras):</strong> somente depois que
+              <strong>Camadas 2, 3... (Extras):</strong> somente depois que
               todos garantirem 1 cota é que as cotas restantes vão para quem
               pediu 2ª cota, depois 3ª cota, e assim por diante.
             </li>
@@ -147,12 +224,16 @@ export function RulesPage() {
 
           <div className="card-cream stack-xs" style={{ marginTop: 6 }}>
             <div className="row-between">
-              <span>Prazo de inscrições:</span>
+              <span>Data limite para registro:</span>
               <strong>{formatDateBr(publicConfig.registrationDeadline)}</strong>
             </div>
             <div className="row-between">
-              <span>Prazo para pagamento PIX:</span>
+              <span>Data limite para pagamento PIX:</span>
               <strong>{formatDateBr(publicConfig.paymentDeadline)}</strong>
+            </div>
+            <div className="row-between">
+              <span>Data de realizar a aposta:</span>
+              <strong>{formatDateBr(publicConfig.betPlacementDate)}</strong>
             </div>
             <div className="row-between">
               <span>Sorteio oficial:</span>

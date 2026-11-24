@@ -1388,9 +1388,9 @@ export function AdminPage() {
                 </div>
               </div>
 
-              <div className="grid-3" style={{ gap: 10 }}>
+              <div className="grid-2" style={{ gap: 10 }}>
                 <div className="field">
-                  <label>Prazo inscrição</label>
+                  <label>Data limite para registro</label>
                   <input
                     type="date"
                     className="input"
@@ -1404,7 +1404,7 @@ export function AdminPage() {
                   />
                 </div>
                 <div className="field">
-                  <label>Prazo PIX</label>
+                  <label>Data limite para pagamento PIX</label>
                   <input
                     type="date"
                     className="input"
@@ -1418,7 +1418,21 @@ export function AdminPage() {
                   />
                 </div>
                 <div className="field">
-                  <label>Data sorteio</label>
+                  <label>Data de realizar a aposta</label>
+                  <input
+                    type="date"
+                    className="input"
+                    value={pubForm.betPlacementDate}
+                    onChange={(e) =>
+                      setPubForm({
+                        ...pubForm,
+                        betPlacementDate: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="field">
+                  <label>Data do sorteio</label>
                   <input
                     type="date"
                     className="input"

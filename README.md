@@ -8,12 +8,21 @@ Hospedagem 100% gratuita em **GitHub Pages + Firebase (plano Spark) + Google App
 
 ## Principais Funcionalidades
 
-- **Equidade em camadas (100 cotas, teto configurável por pessoa):** todo participante aprovado e pago garante a 1ª cota antes das extras; desempate dentro da camada por ordem de inscrição; acima de 100 pessoas entra na Fila de Espera.
+- **Equidade em camadas (100 cotas, padrão de até 3 cotas/pessoa — configurável):** todo participante aprovado e pago garante a 1ª cota antes das extras; desempate dentro da camada por ordem de inscrição; acima de 100 pessoas entra na Fila de Espera.
+- **Linha do Tempo do Bolão:** cronograma completo na página inicial e na página de regras com **data limite para registro**, **data limite para pagamento PIX**, **data de realizar a aposta** na lotérica e **data do sorteio** (todas configuráveis no `/admin`).
 - **PIX Estático (EMVCo / BR Code) sem API bancária:** QR Code + Copia e Cola com valor exato e `txid` único (`MEGACORN26...`). Participantes ainda não aprovados também podem adiantar o PIX (com estorno automático caso recusados).
 - **Privacidade & PII:** e-mail pessoal e **CPF opcional** (para constar no bilhete) isolados em `users/{uid}` — nunca aparecem no placar. Pendentes de aprovação aparecem apenas em contador anônimo. Botão LGPD para limpar CPFs após emissão dos bilhetes.
 - **Magic Link + Sessão Persistente + Sign-out:** login sem senha por e-mail pessoal, retorno automático no mesmo navegador (cookies auxiliares + `browserLocalPersistence`), confirmação amigável ao abrir em outro dispositivo, recuperação de link expirado e botão **Sair**.
 - **Jogos, Probabilidades & Conferidor:** suporte a apostas de 6 a 20 dezenas com cálculo exato de chances (Sena, Quina, Quadra) individual e acumulado do bolão + conferidor automático com múltiplas premiações.
 - **Painel Admin Completo:** toggles liga/desliga de etapas e submissões (`registrationsOpen`, `quotaEditsOpen`, `pixPaymentOpen`, `boardVisible`, `gamesVisible`, `poolClosed`), fechamento com cálculo de estornos, integração direta do Google Apps Script na UI, exportação CSV e log de auditoria.
+
+---
+
+## Por que esses parâmetros? (Regras de Negócio)
+
+- **Por que o limite de 100 cotas?** Nas regras oficiais do **Bolão Caixa** para a Mega-Sena / Mega da Virada, o limite regulamentar máximo é de **100 cotas por bolão** (com recibo individual por cota). Manter o teto em 100 cotas alinha o MegaCorn exatamente às regras da lotérica, simplifica a divisão de eventuais prêmios e comporta com folga um time de 50 a 70 pessoas garantindo pelo menos 1 cota para cada participante.
+- **Por que o preço da cota (padrão R$ 35,00, configurável)?** Equilibra **acessibilidade** (para que todo o time consiga participar) com **poder de aposta**: com 100 cotas preenchidas (R$ 3.500,00), é possível montar **apostas múltiplas estratégicas** (volantes de 7 a 10+ dezenas, multiplicando centenas de vezes a chance contra uma aposta simples), sempre acima do valor mínimo por cota exigido pela Caixa.
+- **Por que o limite padrão de 3 cotas por pessoa?** Permite que quem desejar investir um pouco mais amplie sua participação sem concentrar cotas demais em poucas pessoas — preservando o espírito coletivo do bolão e reduzindo a necessidade de estornos no fechamento.
 
 ---
 

@@ -18,10 +18,11 @@ export interface PublicConfig {
   edition: string;
   quotaPrice: number; // em reais (ex: 30)
   totalQuotas: number; // padrão: 100
-  maxQuotasPerPerson: number; // padrão: 5
-  registrationDeadline: string; // ex: "2026-12-20"
-  paymentDeadline: string; // ex: "2026-12-23"
-  drawDate: string; // ex: "2026-12-31"
+  maxQuotasPerPerson: number; // padrão: 3
+  registrationDeadline: string; // data limite para registro (ex: "2026-12-18")
+  paymentDeadline: string; // data limite para pagamento PIX (ex: "2026-12-22")
+  betPlacementDate: string; // data de realizar a aposta na lotérica (ex: "2026-12-28")
+  drawDate: string; // data do sorteio (ex: "2026-12-31")
   bannerMessage: string;
   rulesExtraNotes: string;
   flags: StageToggles;

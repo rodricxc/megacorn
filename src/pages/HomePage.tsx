@@ -10,8 +10,9 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Timeline } from '../components/Timeline';
 import { useApp } from '../context/AppContext';
-import { formatCurrencyBr, formatDateBr } from '../lib/appsScript';
+import { formatCurrencyBr } from '../lib/appsScript';
 import { getSessionCookieHint } from '../lib/session';
 import { dataService } from '../services';
 
@@ -60,99 +61,91 @@ export function HomePage() {
 
   return (
     <div className="container stack-lg">
-      <section className="card hero-grid">
-        <div className="stack-md">
-          <div className="row" style={{ gap: 8 }}>
-            <span className="badge badge-warning">
-              <Sparkles size={13} />
-              Edição {publicConfig.edition}
-            </span>
-            <span className="badge badge-success">
-              <Clover size={13} />
-              {publicConfig.totalQuotas} cotas • {formatCurrencyBr(publicConfig.quotaPrice)} cada
-            </span>
-          </div>
-
-          <h1>
-            Bolão {publicConfig.poolName}: sorte coletiva com equidade de verdade
-          </h1>
-
-          <p className="hero-lead">
-            Reserve suas cotas do bolão de fim de ano do time com regra justa:
-            todo mundo tem prioridade na 1ª cota antes das extras. Pagamento por
-            PIX com identificador único, transparência total dos jogos e
-            privacidade protegida.
-          </p>
-
-          <div className="grid-3" style={{ gap: 10 }}>
-            <div className="card-cream">
-              <div className="stat-label">Inscrições até</div>
-              <div style={{ fontWeight: 800, marginTop: 4 }}>
-                {formatDateBr(publicConfig.registrationDeadline)}
-              </div>
+      <section className="card stack-md">
+        <div className="hero-grid">
+          <div className="stack-md">
+            <div className="row" style={{ gap: 8 }}>
+              <span className="badge badge-warning">
+                <Sparkles size={13} />
+                Edição {publicConfig.edition}
+              </span>
+              <span className="badge badge-success">
+                <Clover size={13} />
+                {publicConfig.totalQuotas} cotas • {formatCurrencyBr(publicConfig.quotaPrice)} cada
+              </span>
             </div>
-            <div className="card-cream">
-              <div className="stat-label">PIX até</div>
-              <div style={{ fontWeight: 800, marginTop: 4 }}>
-                {formatDateBr(publicConfig.paymentDeadline)}
-              </div>
-            </div>
-            <div className="card-gold">
-              <div className="stat-label">Sorteio</div>
-              <div style={{ fontWeight: 800, marginTop: 4 }}>
-                {formatDateBr(publicConfig.drawDate)}
-              </div>
-            </div>
-          </div>
 
-          <div className="row">
-            {authUser ? (
-              <>
-                <Link
-                  to="/minha-cota"
-                  className="btn btn-primary"
-                  id="hero-go-my-quota"
-                >
-                  Ir para Minha Cota
-                  <ArrowRight size={16} />
-                </Link>
-                {profile?.isModerator && (
-                  <Link to="/admin" className="btn btn-unicorn" id="hero-go-admin">
-                    <ShieldCheck size={16} />
-                    Abrir Painel Admin
+            <h1>
+              Bolão {publicConfig.poolName}: sorte coletiva com equidade de verdade
+            </h1>
+
+            <p className="hero-lead">
+              Reserve suas cotas do bolão de fim de ano do time com regra justa:
+              todo mundo tem prioridade na 1ª cota antes das extras. Pagamento por
+              PIX com identificador único, transparência total dos jogos e
+              privacidade protegida.
+            </p>
+
+            <div className="row">
+              {authUser ? (
+                <>
+                  <Link
+                    to="/minha-cota"
+                    className="btn btn-primary"
+                    id="hero-go-my-quota"
+                  >
+                    Ir para Minha Cota
+                    <ArrowRight size={16} />
                   </Link>
-                )}
-              </>
-            ) : null}
+                  {profile?.isModerator && (
+                    <Link to="/admin" className="btn btn-unicorn" id="hero-go-admin">
+                      <ShieldCheck size={16} />
+                      Abrir Painel Admin
+                    </Link>
+                  )}
+                </>
+              ) : null}
 
-            <Link
-              to="/regras"
-              className="btn btn-secondary"
-              id="hero-read-rules"
+              <Link
+                to="/regras"
+                className="btn btn-secondary"
+                id="hero-read-rules"
+              >
+                <BookOpen size={16} />
+                Ler Regras e Funcionamento
+              </Link>
+            </div>
+          </div>
+
+          <div className="hero-mascot-wrap">
+            <img
+              src="./megacorn-mascot.jpg"
+              alt="Mascote MegaCorn — Milho dourado com chifre de unicórnio, trevos da sorte e moedas"
+              className="hero-mascot"
+            />
+            <p
+              style={{
+                textAlign: 'center',
+                fontSize: '0.84rem',
+                color: 'var(--ink-muted)',
+                maxWidth: '30ch',
+              }}
             >
-              <BookOpen size={16} />
-              Ler Regras e Funcionamento
-            </Link>
+              Milho dourado, unicórnio da sorte e contas claras para a virada do
+              time.
+            </p>
           </div>
         </div>
 
-        <div className="hero-mascot-wrap">
-          <img
-            src="./megacorn-mascot.jpg"
-            alt="Mascote MegaCorn — Milho dourado com chifre de unicórnio, trevos da sorte e moedas"
-            className="hero-mascot"
-          />
-          <p
-            style={{
-              textAlign: 'center',
-              fontSize: '0.84rem',
-              color: 'var(--ink-muted)',
-              maxWidth: '30ch',
-            }}
-          >
-            Milho dourado, unicórnio da sorte e contas claras para a virada do
-            time.
-          </p>
+        <div
+          className="stack-xs"
+          style={{
+            borderTop: '1px solid var(--border-subtle)',
+            paddingTop: 18,
+          }}
+        >
+          <div className="stat-label">Cronograma do {publicConfig.poolName}</div>
+          <Timeline config={publicConfig} compact />
         </div>
       </section>
 

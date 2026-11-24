@@ -28,7 +28,7 @@ import {
   type SignInLinkCompletionResult,
 } from './dataService';
 
-const STORAGE_KEY = 'megacorn_demo_state_v1';
+const STORAGE_KEY = 'megacorn_demo_state_v2';
 const AUTH_KEY = 'megacorn_demo_auth_v1';
 
 interface DemoState {
@@ -77,8 +77,8 @@ function createSeedState(): DemoState {
       displayName: 'Lucas Pereira',
       cpf: '52998224725',
       approvalStatus: 'approved',
-      requestedQuotas: 4,
-      paidQuotas: 4,
+      requestedQuotas: 3,
+      paidQuotas: 3,
       finalQuotas: null,
       paymentStatus: 'confirmed',
       paymentNote: 'Pago via Nubank',
@@ -270,7 +270,7 @@ function createSeedState(): DemoState {
         action: 'Bolão criado',
         actorEmail: 'organizador@megacorn.demo',
         targetName: 'MegaCorn 2026',
-        details: 'Configuração inicial com 100 cotas a R$ 35,00 (máx. 5/pessoa).',
+        details: 'Configuração inicial com 100 cotas a R$ 35,00 (máx. 3/pessoa).',
         createdAt: now - 6 * day,
       },
       {
@@ -278,7 +278,7 @@ function createSeedState(): DemoState {
         action: 'PIX confirmado',
         actorEmail: 'organizador@megacorn.demo',
         targetName: 'Lucas Pereira',
-        details: 'Confirmadas 4 cotas (R$ 140,00) — TXID MEGACORN26USR002.',
+        details: 'Confirmadas 3 cotas (R$ 105,00) — TXID MEGACORN26USR002.',
         createdAt: now - 4 * day,
       },
     ],
