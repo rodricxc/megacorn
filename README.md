@@ -4,6 +4,11 @@ Site completo para organizar o bolão de fim de ano do time com **alocação jus
 
 Hospedagem 100% gratuita em **GitHub Pages + Firebase (plano Spark) + Google Apps Script**, sem cartão de crédito.
 
+### Documentação Adicional
+- [**AGENTS.md**](./AGENTS.md) — Contexto rápido do projeto, mapa de arquivos e invariantes para novas sessões de chat / agentes de IA
+- [**docs/ARCHITECTURE.md**](./docs/ARCHITECTURE.md) — Arquitetura, modelo de dados no Firestore, segurança/PII e algoritmos
+- [**docs/OPERATIONS.md**](./docs/OPERATIONS.md) — Manual operacional dos organizadores pelas 8 fases da timeline e limpeza pós-sorteio
+
 ---
 
 ## Principais Funcionalidades
