@@ -12,13 +12,35 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isModerator == true;
     }
 
-    function hasProfile() {
+    // Perfil ativo: passou pelo código de convite e não foi recusado/cancelado
+    function hasActiveProfile() {
       return isSignedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approvalStatus in ['pending', 'approved'];
+    }
+
+    function publicConfigDoc() {
+      return get(/databases/$(database)/documents/config/public).data;
     }
 
     function publicFlags() {
-      return get(/databases/$(database)/documents/config/public).data.flags;
+      return publicConfigDoc().flags;
+    }
+
+    function maxQuotasPerPerson() {
+      return ('maxQuotasPerPerson' in publicConfigDoc())
+        ? publicConfigDoc().maxQuotasPerPerson
+        : 3;
+    }
+
+    function isValidQuotaCount(q) {
+      return q is int && q >= 1 && q <= maxQuotasPerPerson();
+    }
+
+    function isReasonableTimestamp(ts) {
+      return ts is int
+        && ts >= request.time.toMillis() - 300000
+        && ts <= request.time.toMillis() + 300000;
     }
 
     // Configurações públicas (Regras, prazos, valor da cota e toggles de etapas)
@@ -27,10 +49,9 @@ service cloud.firestore {
       allow write: if isModerator();
     }
 
-    // Chave PIX: liberada para qualquer participante autenticado que validou convite
-    // (inclusive pendentes de aprovação, conforme regra do MegaCorn) e moderadores
+    // Chave PIX: liberada para participantes ativos (pendentes ou aprovados) e moderadores
     match /config/payment {
-      allow read: if hasProfile() || isModerator();
+      allow read: if hasActiveProfile() || isModerator();
       allow write: if isModerator();
     }
 
@@ -51,30 +72,52 @@ service cloud.firestore {
       allow get: if (isSignedIn() && request.auth.uid == uid) || isModerator();
       allow list: if isModerator();
 
-      // Cadastro inicial permitido somente se registrationsOpen == true (ou por moderador)
+      // Cadastro inicial permitido somente com convite ativo, dentro dos limites e com timestamp real
       allow create: if isModerator()
         || (
           isSignedIn()
           && request.auth.uid == uid
           && publicFlags().registrationsOpen == true
           && request.resource.data.uid == uid
+          && request.resource.data.email is string
+          && request.auth.token.email is string
+          && request.resource.data.email.lower() == request.auth.token.email.lower()
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() >= 1
+          && request.resource.data.displayName.size() <= 80
+          && request.resource.data.cpf is string
+          && request.resource.data.cpf.size() <= 11
+          && request.resource.data.paymentNote is string
+          && request.resource.data.paymentNote.size() <= 200
+          && isValidQuotaCount(request.resource.data.requestedQuotas)
+          && isReasonableTimestamp(request.resource.data.createdAt)
           && request.resource.data.isModerator == false
           && request.resource.data.approvalStatus == 'pending'
           && request.resource.data.paymentStatus == 'unpaid'
           && request.resource.data.paidQuotas == 0
+          && request.resource.data.finalQuotas == null
+          && request.resource.data.refundStatus == 'none'
+          && request.resource.data.refundQuotas == 0
+          && request.resource.data.refundAmount == 0
+          && request.resource.data.inviteCodeUsed is string
           && exists(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCodeUsed))
           && get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCodeUsed)).data.active == true
         );
 
       // Atualização pelo próprio participante:
-      // - Pode editar displayName e CPF opcional
-      // - Pode editar requestedQuotas somente se quotaEditsOpen == true e ainda não marcou pago
+      // - Campos de identidade, privilégio, fila (createdAt) e financeiros são imutáveis
+      // - Pode editar displayName e CPF opcional (com limites de tamanho)
+      // - Pode editar requestedQuotas somente dentro do teto se quotaEditsOpen == true e unpaid
       // - Pode marcar paymentStatus = 'reported' somente se pixPaymentOpen == true
-      // - Jamais pode alterar isModerator, approvalStatus, paidQuotas, finalQuotas ou refundStatus
       allow update: if isModerator()
         || (
           isSignedIn()
           && request.auth.uid == uid
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.txid == resource.data.txid
+          && request.resource.data.inviteCodeUsed == resource.data.inviteCodeUsed
+          && request.resource.data.createdAt == resource.data.createdAt
           && request.resource.data.isModerator == resource.data.isModerator
           && request.resource.data.approvalStatus == resource.data.approvalStatus
           && request.resource.data.paidQuotas == resource.data.paidQuotas
@@ -82,10 +125,20 @@ service cloud.firestore {
           && request.resource.data.refundStatus == resource.data.refundStatus
           && request.resource.data.refundQuotas == resource.data.refundQuotas
           && request.resource.data.refundAmount == resource.data.refundAmount
-          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() >= 1
+          && request.resource.data.displayName.size() <= 80
+          && request.resource.data.cpf is string
+          && request.resource.data.cpf.size() <= 11
+          && request.resource.data.paymentNote is string
+          && request.resource.data.paymentNote.size() <= 200
           && (
             request.resource.data.requestedQuotas == resource.data.requestedQuotas
-            || (publicFlags().quotaEditsOpen == true && resource.data.paymentStatus == 'unpaid')
+            || (
+              publicFlags().quotaEditsOpen == true
+              && resource.data.paymentStatus == 'unpaid'
+              && isValidQuotaCount(request.resource.data.requestedQuotas)
+            )
           )
           && (
             request.resource.data.paymentStatus == resource.data.paymentStatus
@@ -100,22 +153,32 @@ service cloud.firestore {
       allow delete: if isModerator();
     }
 
-    // Placar de Transparência (ZERO e-mail, ZERO CPF; apenas participantes aprovados)
+    // Placar de Transparência (ZERO e-mail, ZERO CPF; apenas participantes ativos leem)
     match /board/{uid} {
-      allow read: if isModerator() || (isSignedIn() && publicFlags().boardVisible == true);
+      allow read: if isModerator() || (hasActiveProfile() && publicFlags().boardVisible == true);
       allow create, delete: if isModerator();
       allow update: if isModerator()
         || (
-          isSignedIn()
+          hasActiveProfile()
           && request.auth.uid == uid
           && !('email' in request.resource.data)
           && !('cpf' in request.resource.data)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.createdAt == resource.data.createdAt
           && request.resource.data.paidQuotas == resource.data.paidQuotas
           && request.resource.data.finalQuotas == resource.data.finalQuotas
           && request.resource.data.refundStatus == resource.data.refundStatus
+          && request.resource.data.refundQuotas == resource.data.refundQuotas
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() >= 1
+          && request.resource.data.displayName.size() <= 80
           && (
             request.resource.data.requestedQuotas == resource.data.requestedQuotas
-            || (publicFlags().quotaEditsOpen == true && resource.data.paymentStatus == 'unpaid')
+            || (
+              publicFlags().quotaEditsOpen == true
+              && resource.data.paymentStatus == 'unpaid'
+              && isValidQuotaCount(request.resource.data.requestedQuotas)
+            )
           )
           && (
             request.resource.data.paymentStatus == resource.data.paymentStatus
@@ -128,26 +191,28 @@ service cloud.firestore {
         );
     }
 
-    // Contadores agregados (inclui contagem de pendentes sem expor nomes)
+    // Contadores agregados: leitura só para participantes ativos; incremento somente no batch de cadastro
     match /stats/summary {
-      allow read: if isSignedIn();
+      allow read: if isModerator() || hasActiveProfile();
       allow write: if isModerator()
         || (
           isSignedIn()
           && publicFlags().registrationsOpen == true
+          && !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && existsAfter(/databases/$(database)/documents/users/$(request.auth.uid))
           && request.resource.data.approvedCount == resource.data.approvedCount
           && request.resource.data.pendingApprovalCount == resource.data.pendingApprovalCount + 1
         );
     }
 
-    // Jogos apostados e dezenas sorteadas
+    // Jogos apostados e dezenas sorteadas: somente participantes ativos e moderadores
     match /games/{gameId} {
-      allow read: if isModerator() || (isSignedIn() && publicFlags().gamesVisible == true);
+      allow read: if isModerator() || (hasActiveProfile() && publicFlags().gamesVisible == true);
       allow write: if isModerator();
     }
 
     match /drawResult/current {
-      allow read: if isModerator() || (isSignedIn() && publicFlags().gamesVisible == true);
+      allow read: if isModerator() || (hasActiveProfile() && publicFlags().gamesVisible == true);
       allow write: if isModerator();
     }
 

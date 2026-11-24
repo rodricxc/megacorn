@@ -98,25 +98,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const [userProf, board, stats, gameList, draw] = await Promise.all([
-        dataService.getUserProfile(authUser.uid),
-        dataService.getBoardEntries(),
-        dataService.getPoolStats(),
-        dataService.getGames(),
-        dataService.getDrawResult(),
-      ]);
-
+      const userProf = await dataService.getUserProfile(authUser.uid);
       setProfile(userProf);
-      setBoardEntries(board);
-      setPoolStats(stats);
-      setGames(gameList);
-      setDrawResult(draw);
 
-      if (userProf) {
-        const pay = await dataService.getPaymentConfig();
+      const canReadPoolData =
+        Boolean(userProf?.isModerator) ||
+        userProf?.approvalStatus === 'pending' ||
+        userProf?.approvalStatus === 'approved';
+
+      if (canReadPoolData) {
+        const [pay, board, stats, gameList, draw] = await Promise.all([
+          dataService.getPaymentConfig(),
+          dataService.getBoardEntries(),
+          dataService.getPoolStats(),
+          dataService.getGames(),
+          dataService.getDrawResult(),
+        ]);
         setPaymentConfig(pay);
+        setBoardEntries(board);
+        setPoolStats(stats);
+        setGames(gameList);
+        setDrawResult(draw);
       } else {
         setPaymentConfig(null);
+        setBoardEntries([]);
+        setPoolStats({ pendingApprovalCount: 0, approvedCount: 0 });
+        setGames([]);
+        setDrawResult({ numbers: [], updatedAt: null, updatedBy: null });
       }
 
       if (userProf?.isModerator) {
