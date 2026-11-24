@@ -380,7 +380,7 @@ export function MyQuotaPage() {
             <div className="stat-label">
               {publicConfig.flags.poolClosed
                 ? 'Cotas finais'
-                : 'Previsto pela equidade'}
+                : 'Cotas Estimadas (estado atual)'}
             </div>
             <div className="stat-value">
               {publicConfig.flags.poolClosed

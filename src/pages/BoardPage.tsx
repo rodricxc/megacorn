@@ -159,7 +159,7 @@ export function BoardPage() {
                   <th>
                     {publicConfig.flags.poolClosed
                       ? 'Cotas Finais'
-                      : 'Equidade (Hoje)'}
+                      : 'Cotas Estimadas (estado atual)'}
                   </th>
                   <th>Pagamento PIX</th>
                   <th>Nº Cota Bilhete / Entrega</th>
