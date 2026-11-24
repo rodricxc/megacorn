@@ -413,15 +413,41 @@ export function MyQuotaPage() {
           </div>
 
           <div className="stat-tile">
-            <div className="stat-label">CPF no bilhete</div>
-            <div className="stat-value" style={{ fontSize: '1.25rem' }}>
-              {profile.cpf ? 'Informado' : 'Opcional'}
+            <div className="stat-label">Bilhete / Comprovante</div>
+            <div className="stat-value" style={{ fontSize: '1.2rem' }}>
+              {profile.assignedTicketNumbers || 'Após aposta'}
             </div>
             <div className="stat-sub">
-              {profile.cpf ? 'Protegido (PII)' : 'Não preenchido'}
+              {profile.receiptDelivered
+                ? 'Entregue em mãos ✓'
+                : profile.assignedTicketNumbers
+                  ? 'Aguardando entrega em mãos'
+                  : profile.cpf
+                    ? 'CPF informado (PII)'
+                    : 'CPF opcional'}
             </div>
           </div>
         </div>
+
+        {(profile.assignedTicketNumbers || profile.receiptDelivered) && (
+          <div
+            className={`alert ${profile.receiptDelivered ? 'alert-success' : 'alert-info'}`}
+          >
+            <CheckCircle2 size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <strong>
+                {profile.assignedTicketNumbers
+                  ? `Nº da(s) sua(s) cota(s) no bilhete da lotérica: ${profile.assignedTicketNumbers}`
+                  : 'Comprovante da lotérica'}
+              </strong>
+              <p style={{ marginTop: 4 }}>
+                {profile.receiptDelivered
+                  ? 'Comprovante físico marcado como entregue em mãos pela organização.'
+                  : 'Seus jogos foram registrados na lotérica! Procure a organização para retirar seu comprovante físico em mãos.'}
+              </p>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Card PIX — liberado inclusive para pendentes de aprovação! */}

@@ -227,16 +227,23 @@ export function PixCard({
             </p>
           </div>
           <div className="field">
-            <label htmlFor="pix-note-input">Observação opcional (ex.: nome do pagador ou horário)</label>
+            <label htmlFor="pix-note-input">
+              Observação / titular da conta pagadora (opcional)
+            </label>
             <input
               id="pix-note-input"
               type="text"
               className="input"
-              placeholder="Ex.: Pago às 15h30 pelo banco X"
+              placeholder="Ex.: Pago pela conta de Maria Silva às 15h30"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               maxLength={140}
             />
+            <span className="field-hint">
+              Se o PIX foi feito a partir de uma conta bancária em nome de outra
+              pessoa (ou conta PJ), informe o <strong>nome do titular da conta</strong>{' '}
+              acima para facilitar a identificação no extrato.
+            </span>
           </div>
           {error && <div className="alert alert-danger">{error}</div>}
           <div>

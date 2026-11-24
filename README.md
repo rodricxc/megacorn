@@ -21,7 +21,7 @@ Hospedagem 100% gratuita em **GitHub Pages + Firebase (plano Spark) + Google App
 ## Por que esses parâmetros? (Regras de Negócio)
 
 - **Por que o limite de 100 cotas?** Nas regras oficiais do **Bolão Caixa** para a Mega-Sena / Mega da Virada, o limite regulamentar máximo é de **100 cotas por bolão** (com recibo individual por cota). Manter o teto em 100 cotas alinha o MegaCorn exatamente às regras da lotérica, simplifica a divisão de eventuais prêmios e comporta com folga um time de 50 a 70 pessoas garantindo pelo menos 1 cota para cada participante.
-- **Por que o preço da cota (padrão R$ 35,00, configurável)?** Equilibra **acessibilidade** (para que todo o time consiga participar) com **poder de aposta**: com 100 cotas preenchidas (R$ 3.500,00), é possível montar **apostas múltiplas estratégicas** (volantes de 7 a 10+ dezenas, multiplicando centenas de vezes a chance contra uma aposta simples), sempre acima do valor mínimo por cota exigido pela Caixa.
+- **Por que o preço da cota (padrão R$ 40,32, configurável)?** Esse valor foi escolhido para ser possível realizar **8 jogos de 9 números** na Mega da Virada (total de 672 combinações simples), mantendo exatamente **um único comprovante oficial da lotérica por cota** (texto editável pelo admin em `/admin`).
 - **Por que o limite padrão de 3 cotas por pessoa?** Permite que quem desejar investir um pouco mais amplie sua participação sem concentrar cotas demais em poucas pessoas — preservando o espírito coletivo do bolão e reduzindo a necessidade de estornos no fechamento.
 
 ---

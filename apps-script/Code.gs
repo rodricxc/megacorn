@@ -45,7 +45,7 @@ function doPost(e) {
           'Olá, ' + displayName + '!\n\n' +
           'A integração do Google Apps Script com o painel admin do ' + poolName + ' está funcionando perfeitamente.\n' +
           (siteUrl ? '\nAcesse o bolão: ' + siteUrl + '\n' : '') +
-          '\nBoa sorte! 🌽🦄🍀';
+          '\nBoa sorte!';
         break;
 
       case 'approval':
@@ -58,7 +58,7 @@ function doPost(e) {
           (data.txid ? 'Identificador PIX (txid): ' + data.txid + '\n' : '') +
           (data.customMessage ? '\nRecado dos organizadores: ' + data.customMessage + '\n' : '') +
           (siteUrl ? '\nAcesse o site para ver seu QR Code PIX e acompanhar o placar: ' + siteUrl + '\n' : '') +
-          '\nBoa sorte! 🌽🦄🍀';
+          '\nBoa sorte!';
         break;
 
       case 'payment_confirmed':
@@ -71,7 +71,7 @@ function doPost(e) {
           (data.txid ? 'Identificador PIX (txid): ' + data.txid + '\n' : '') +
           '\nLembrete: a distribuição final segue a regra de equidade no fechamento das cotas.\n' +
           (siteUrl ? 'Acompanhe no site: ' + siteUrl + '\n' : '') +
-          '\nBoa sorte! 🌽🦄🍀';
+          '\nBoa sorte!';
         break;
 
       case 'payment_reminder':
@@ -84,7 +84,7 @@ function doPost(e) {
           (data.txid ? 'Identificador PIX (txid): ' + data.txid + '\n' : '') +
           (data.customMessage ? '\nRecado: ' + data.customMessage + '\n' : '') +
           (siteUrl ? '\nAcesse para copiar o PIX e marcar "Já fiz o PIX": ' + siteUrl + '\n' : '') +
-          '\nQualquer dúvida, fale com os organizadores. 🌽🦄🍀';
+          '\nQualquer dúvida, fale com os organizadores.';
         break;
 
       case 'refund_notice':
@@ -96,7 +96,7 @@ function doPost(e) {
           'Valor do estorno: ' + refundStr + '\n' +
           (data.customMessage ? '\nDetalhes: ' + data.customMessage + '\n' : '') +
           (siteUrl ? '\nConfira seu status atualizado: ' + siteUrl + '\n' : '') +
-          '\nAbraços, Organização ' + poolName + ' 🌽🦄';
+          '\nAbraços, Organização ' + poolName;
         break;
 
       case 'rejection':

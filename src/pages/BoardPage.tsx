@@ -162,6 +162,7 @@ export function BoardPage() {
                       : 'Equidade (Hoje)'}
                   </th>
                   <th>Pagamento PIX</th>
+                  <th>Nº Cota Bilhete / Entrega</th>
                   <th>Observação</th>
                 </tr>
               </thead>
@@ -217,6 +218,27 @@ export function BoardPage() {
                         )}
                         {entry.paymentStatus === 'unpaid' && (
                           <span className="badge badge-neutral">Pendente</span>
+                        )}
+                      </td>
+                      <td>
+                        {entry.assignedTicketNumbers || entry.receiptDelivered ? (
+                          <div className="row" style={{ gap: 6 }}>
+                            {entry.assignedTicketNumbers && (
+                              <span className="badge badge-warning mono">
+                                {entry.assignedTicketNumbers}
+                              </span>
+                            )}
+                            {entry.receiptDelivered && (
+                              <span className="badge badge-success">
+                                <CheckCircle2 size={12} />
+                                Em mãos
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--ink-muted)', fontSize: '0.82rem' }}>
+                            Após aposta
+                          </span>
                         )}
                       </td>
                       <td>

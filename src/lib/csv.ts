@@ -31,6 +31,8 @@ export function exportParticipantsCsv(
     'Status Estorno',
     'Cotas Estorno',
     'Valor Estorno (R$)',
+    'Numero Cota Bilhete',
+    'Comprovante Entregue em Maos',
     'Inscrito em',
   ];
 
@@ -60,6 +62,8 @@ export function exportParticipantsCsv(
         u.refundStatus,
         u.refundQuotas,
         u.refundAmount.toFixed(2),
+        u.assignedTicketNumbers || '',
+        u.receiptDelivered ? 'Sim' : 'Nao',
         new Date(u.createdAt).toLocaleString('pt-BR'),
       ].map(escapeCsvCell);
     });

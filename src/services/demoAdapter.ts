@@ -65,6 +65,10 @@ function createSeedState(): DemoState {
       refundAmount: 0,
       refundCompletedAt: null,
       refundCompletedBy: null,
+      assignedTicketNumbers: '',
+      receiptDelivered: false,
+      receiptDeliveredAt: null,
+      receiptDeliveredBy: null,
       txid: 'MEGACORN26MOD001',
       inviteCodeUsed: 'MEGACORN2027',
       isModerator: true,
@@ -90,6 +94,10 @@ function createSeedState(): DemoState {
       refundAmount: 0,
       refundCompletedAt: null,
       refundCompletedBy: null,
+      assignedTicketNumbers: '',
+      receiptDelivered: false,
+      receiptDeliveredAt: null,
+      receiptDeliveredBy: null,
       txid: 'MEGACORN26USR002',
       inviteCodeUsed: 'MEGACORN2027',
       isModerator: false,
@@ -115,6 +123,10 @@ function createSeedState(): DemoState {
       refundAmount: 0,
       refundCompletedAt: null,
       refundCompletedBy: null,
+      assignedTicketNumbers: '',
+      receiptDelivered: false,
+      receiptDeliveredAt: null,
+      receiptDeliveredBy: null,
       txid: 'MEGACORN26USR003',
       inviteCodeUsed: 'MEGACORN2027',
       isModerator: false,
@@ -140,6 +152,10 @@ function createSeedState(): DemoState {
       refundAmount: 0,
       refundCompletedAt: null,
       refundCompletedBy: null,
+      assignedTicketNumbers: '',
+      receiptDelivered: false,
+      receiptDeliveredAt: null,
+      receiptDeliveredBy: null,
       txid: 'MEGACORN26USR004',
       inviteCodeUsed: 'MEGACORN2027',
       isModerator: false,
@@ -165,6 +181,10 @@ function createSeedState(): DemoState {
       refundAmount: 0,
       refundCompletedAt: null,
       refundCompletedBy: null,
+      assignedTicketNumbers: '',
+      receiptDelivered: false,
+      receiptDeliveredAt: null,
+      receiptDeliveredBy: null,
       txid: 'MEGACORN26USR005',
       inviteCodeUsed: 'MEGACORN2027',
       isModerator: false,
@@ -190,6 +210,10 @@ function createSeedState(): DemoState {
       refundAmount: 0,
       refundCompletedAt: null,
       refundCompletedBy: null,
+      assignedTicketNumbers: '',
+      receiptDelivered: false,
+      receiptDeliveredAt: null,
+      receiptDeliveredBy: null,
       txid: 'MEGACORN26USR006',
       inviteCodeUsed: 'MEGACORN2027',
       isModerator: false,
@@ -215,6 +239,10 @@ function createSeedState(): DemoState {
       refundAmount: 0,
       refundCompletedAt: null,
       refundCompletedBy: null,
+      assignedTicketNumbers: '',
+      receiptDelivered: false,
+      receiptDeliveredAt: null,
+      receiptDeliveredBy: null,
       txid: 'MEGACORN26USR007',
       inviteCodeUsed: 'MEGACORN2027',
       isModerator: false,
@@ -491,6 +519,8 @@ export function createDemoDataService(): DataService {
           paymentStatus: u.paymentStatus,
           refundStatus: u.refundStatus,
           refundQuotas: u.refundQuotas,
+          assignedTicketNumbers: u.assignedTicketNumbers ?? '',
+          receiptDelivered: Boolean(u.receiptDelivered),
           createdAt: u.createdAt,
         }));
     },
@@ -563,6 +593,10 @@ export function createDemoDataService(): DataService {
         refundAmount: 0,
         refundCompletedAt: null,
         refundCompletedBy: null,
+        assignedTicketNumbers: '',
+        receiptDelivered: false,
+        receiptDeliveredAt: null,
+        receiptDeliveredBy: null,
         txid: generateParticipantTxid(state.publicConfig.edition, input.uid),
         inviteCodeUsed: input.inviteCode.trim().toUpperCase(),
         isModerator: isMod,
@@ -758,6 +792,38 @@ export function createDemoDataService(): DataService {
         actorEmail,
         user.displayName,
         `Alterado de ${oldVal} para ${user.requestedQuotas} cota(s).`
+      );
+      saveState(state);
+    },
+
+    async updateParticipantTicketInfo(uid, input, actorEmail) {
+      const state = loadState();
+      const user = state.users[uid];
+      if (!user) return;
+      const details: string[] = [];
+      if (typeof input.assignedTicketNumbers === 'string') {
+        user.assignedTicketNumbers = input.assignedTicketNumbers.trim();
+        details.push(
+          `Cota(s) bilhete: ${user.assignedTicketNumbers || 'removido'}`
+        );
+      }
+      if (typeof input.receiptDelivered === 'boolean') {
+        user.receiptDelivered = input.receiptDelivered;
+        user.receiptDeliveredAt = input.receiptDelivered ? Date.now() : null;
+        user.receiptDeliveredBy = input.receiptDelivered ? actorEmail : null;
+        details.push(
+          input.receiptDelivered
+            ? 'Comprovante entregue em mãos'
+            : 'Entrega em mãos desmarcada'
+        );
+      }
+      user.updatedAt = Date.now();
+      appendLog(
+        state,
+        'Bilhete / Entrega atualizado',
+        actorEmail,
+        user.displayName,
+        details.join(' | ') || 'Atualizado'
       );
       saveState(state);
     },

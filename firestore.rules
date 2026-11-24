@@ -99,13 +99,15 @@ service cloud.firestore {
           && request.resource.data.refundStatus == 'none'
           && request.resource.data.refundQuotas == 0
           && request.resource.data.refundAmount == 0
+          && request.resource.data.get('assignedTicketNumbers', '') == ''
+          && request.resource.data.get('receiptDelivered', false) == false
           && request.resource.data.inviteCodeUsed is string
           && exists(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCodeUsed))
           && get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCodeUsed)).data.active == true
         );
 
       // Atualização pelo próprio participante:
-      // - Campos de identidade, privilégio, fila (createdAt) e financeiros são imutáveis
+      // - Campos de identidade, privilégio, fila (createdAt), financeiros e entrega de bilhete são imutáveis
       // - Pode editar displayName e CPF opcional (com limites de tamanho)
       // - Pode editar requestedQuotas somente dentro do teto se quotaEditsOpen == true e unpaid
       // - Pode marcar paymentStatus = 'reported' somente se pixPaymentOpen == true
@@ -125,6 +127,8 @@ service cloud.firestore {
           && request.resource.data.refundStatus == resource.data.refundStatus
           && request.resource.data.refundQuotas == resource.data.refundQuotas
           && request.resource.data.refundAmount == resource.data.refundAmount
+          && request.resource.data.get('assignedTicketNumbers', '') == resource.data.get('assignedTicketNumbers', '')
+          && request.resource.data.get('receiptDelivered', false) == resource.data.get('receiptDelivered', false)
           && request.resource.data.displayName is string
           && request.resource.data.displayName.size() >= 1
           && request.resource.data.displayName.size() <= 80
@@ -169,6 +173,8 @@ service cloud.firestore {
           && request.resource.data.finalQuotas == resource.data.finalQuotas
           && request.resource.data.refundStatus == resource.data.refundStatus
           && request.resource.data.refundQuotas == resource.data.refundQuotas
+          && request.resource.data.get('assignedTicketNumbers', '') == resource.data.get('assignedTicketNumbers', '')
+          && request.resource.data.get('receiptDelivered', false) == resource.data.get('receiptDelivered', false)
           && request.resource.data.displayName is string
           && request.resource.data.displayName.size() >= 1
           && request.resource.data.displayName.size() <= 80

@@ -72,9 +72,16 @@ export function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('participants');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<
-    'all' | 'pending_approval' | 'reported_pix' | 'unpaid' | 'confirmed' | 'refund_pending'
+    | 'all'
+    | 'pending_approval'
+    | 'reported_pix'
+    | 'unpaid'
+    | 'confirmed'
+    | 'refund_pending'
+    | 'receipt_pending'
   >('all');
   const [revealedCpfs, setRevealedCpfs] = useState<Record<string, boolean>>({});
+  const [ticketDrafts, setTicketDrafts] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<{
     type: 'success' | 'danger' | 'info';
     text: string;
@@ -187,11 +194,20 @@ export function AdminPage() {
       if (statusFilter === 'refund_pending' && u.refundStatus !== 'pending') {
         return false;
       }
+      if (
+        statusFilter === 'receipt_pending' &&
+        (u.approvalStatus !== 'approved' ||
+          u.paymentStatus !== 'confirmed' ||
+          u.receiptDelivered)
+      ) {
+        return false;
+      }
       if (!q) return true;
       return (
         u.displayName.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
-        u.txid.toLowerCase().includes(q)
+        u.txid.toLowerCase().includes(q) ||
+        (u.assignedTicketNumbers || '').toLowerCase().includes(q)
       );
     });
   }, [allUsers, search, statusFilter]);
@@ -674,6 +690,9 @@ export function AdminPage() {
                 <option value="refund_pending">
                   Estorno pendente ({refundPendingCount})
                 </option>
+                <option value="receipt_pending">
+                  Comprovante a entregar em mãos
+                </option>
               </select>
             </div>
 
@@ -771,6 +790,7 @@ export function AdminPage() {
                   <th>Aprovação</th>
                   <th>Cotas &amp; TXID</th>
                   <th>PIX / Estorno</th>
+                  <th>Bilhete / Entrega em Mãos</th>
                   <th>Ações</th>
                 </tr>
               </thead>
@@ -947,6 +967,95 @@ export function AdminPage() {
                             </span>
                           </div>
                         )}
+                      </td>
+                      <td>
+                        <div className="stack-xs" style={{ minWidth: 170 }}>
+                          <div className="row" style={{ gap: 4 }}>
+                            <input
+                              type="text"
+                              className="input mono"
+                              style={{
+                                padding: '5px 8px',
+                                fontSize: '0.78rem',
+                                flex: 1,
+                                minWidth: 92,
+                              }}
+                              placeholder="Ex.: #14, #52"
+                              value={
+                                ticketDrafts[u.uid] !== undefined
+                                  ? ticketDrafts[u.uid]
+                                  : u.assignedTicketNumbers || ''
+                              }
+                              onChange={(e) =>
+                                setTicketDrafts((prev) => ({
+                                  ...prev,
+                                  [u.uid]: e.target.value,
+                                }))
+                              }
+                              aria-label={`Número da cota do bilhete de ${u.displayName}`}
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              style={{ padding: '5px 8px' }}
+                              disabled={busyId === u.uid}
+                              onClick={async () => {
+                                const val =
+                                  ticketDrafts[u.uid] !== undefined
+                                    ? ticketDrafts[u.uid]
+                                    : u.assignedTicketNumbers || '';
+                                setBusyId(u.uid);
+                                try {
+                                  await dataService.updateParticipantTicketInfo(
+                                    u.uid,
+                                    { assignedTicketNumbers: val },
+                                    actorEmail
+                                  );
+                                  await refreshAll();
+                                  showToast(
+                                    'success',
+                                    `Nº da cota do bilhete salvo para ${u.displayName}.`
+                                  );
+                                } finally {
+                                  setBusyId(null);
+                                }
+                              }}
+                              title="Salvar nº da cota no bilhete"
+                            >
+                              <Save size={13} />
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            className={`btn btn-sm ${u.receiptDelivered ? 'btn-primary' : 'btn-secondary'}`}
+                            style={{ padding: '4px 9px', fontSize: '0.76rem' }}
+                            disabled={busyId === u.uid}
+                            onClick={async () => {
+                              setBusyId(u.uid);
+                              try {
+                                await dataService.updateParticipantTicketInfo(
+                                  u.uid,
+                                  { receiptDelivered: !u.receiptDelivered },
+                                  actorEmail
+                                );
+                                await refreshAll();
+                                showToast(
+                                  'success',
+                                  !u.receiptDelivered
+                                    ? `Comprovante de ${u.displayName} marcado como entregue em mãos!`
+                                    : `Entrega em mãos de ${u.displayName} desmarcada.`
+                                );
+                              } finally {
+                                setBusyId(null);
+                              }
+                            }}
+                          >
+                            <CheckCircle2 size={12} />
+                            {u.receiptDelivered
+                              ? 'Entregue em mãos ✓'
+                              : 'Marcar entregue em mãos'}
+                          </button>
+                        </div>
                       </td>
                       <td>
                         <div className="row" style={{ gap: 5 }}>
@@ -1520,6 +1629,24 @@ export function AdminPage() {
                     setPubForm({
                       ...pubForm,
                       organizerContact: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="field">
+                <label htmlFor="admin-price-rationale">
+                  Por que esse valor por cota? (exibido na Página de Regras)
+                </label>
+                <textarea
+                  id="admin-price-rationale"
+                  className="textarea"
+                  placeholder="Ex.: Esse valor foi escolhido para ser possível realizar 8 jogos de 9 números e ter somente um comprovante por cota."
+                  value={pubForm.quotaPriceRationale}
+                  onChange={(e) =>
+                    setPubForm({
+                      ...pubForm,
+                      quotaPriceRationale: e.target.value,
                     })
                   }
                 />

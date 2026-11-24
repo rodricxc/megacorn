@@ -24,6 +24,7 @@ export interface PublicConfig {
   betPlacementDate: string; // data de realizar a aposta na lotérica (ex: "2026-12-28")
   drawDate: string; // data do sorteio (ex: "2026-12-31")
   organizerContact: string; // dados de contato dos administradores (Slack, WhatsApp, e-mail)
+  quotaPriceRationale: string; // explicação customizável do porquê do preço da cota
   bannerMessage: string;
   rulesExtraNotes: string;
   flags: StageToggles;
@@ -62,6 +63,10 @@ export interface UserProfile {
   refundAmount: number;
   refundCompletedAt: number | null;
   refundCompletedBy: string | null;
+  assignedTicketNumbers: string; // número(s) da(s) cota(s) no bilhete físico da lotérica (ex: "#14, #52")
+  receiptDelivered: boolean; // comprovante físico entregue em mãos
+  receiptDeliveredAt: number | null;
+  receiptDeliveredBy: string | null;
   txid: string;
   inviteCodeUsed: string;
   isModerator: boolean;
@@ -82,6 +87,8 @@ export interface BoardEntry {
   paymentStatus: PaymentStatus;
   refundStatus: RefundStatus;
   refundQuotas: number;
+  assignedTicketNumbers: string;
+  receiptDelivered: boolean;
   createdAt: number;
 }
 

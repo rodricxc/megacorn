@@ -115,14 +115,8 @@ export function RulesPage() {
               Por que {formatCurrencyBr(publicConfig.quotaPrice)} por cota?
             </h3>
             <p style={{ fontSize: '0.88rem', color: 'var(--ink-secondary)' }}>
-              O valor busca equilibrar <strong>acessibilidade</strong> (para
-              ninguém ficar de fora) com <strong>poder de aposta</strong>: com{' '}
-              {publicConfig.totalQuotas} cotas, formamos um caixa de até{' '}
-              <strong>{formatCurrencyBr(maxPoolBudget)}</strong>, suficiente
-              para registrar <strong>apostas múltiplas estratégicas</strong> (7
-              a 10+ dezenas por volante, multiplicando em centenas de vezes as
-              chances contra um jogo simples) — sempre acima do valor mínimo por
-              cota exigido pela Caixa.
+              {publicConfig.quotaPriceRationale ||
+                `Valor definido pela organização para compor o caixa total de até ${formatCurrencyBr(maxPoolBudget)} com apostas múltiplas estratégicas.`}
             </p>
           </div>
 
@@ -245,7 +239,7 @@ export function RulesPage() {
         <section className="card stack-sm">
           <div className="row" style={{ gap: 10 }}>
             <Coins size={22} color="var(--corn-600)" />
-            <h2>3. Pagamento PIX &amp; Estornos</h2>
+            <h2>3. Pagamento PIX, Comprovantes &amp; Estornos</h2>
           </div>
           <ul
             style={{
@@ -268,8 +262,19 @@ export function RulesPage() {
               fazer o PIX e clicar em <strong>“Já fiz o PIX”</strong>.
             </li>
             <li>
-              <strong>Não precisa enviar foto de comprovante:</strong> a
-              conferência é feita pelo <code>txid</code> no extrato bancário.
+              <strong>Pagou com conta de outra pessoa?</strong> Se o PIX sair de
+              uma conta bancária cujo titular seja diferente do seu nome
+              cadastrado (ex.: cônjuge ou conta PJ),{' '}
+              <strong>informe o nome do titular pagador</strong> no campo de
+              observação ao clicar em “Já fiz o PIX” para facilitar a
+              identificação no extrato.
+            </li>
+            <li>
+              <strong>Bilhete físico e número da cota:</strong> assim que os
+              jogos forem registrados na lotérica, o{' '}
+              <strong>número da(s) cota(s) assinalado</strong> para cada
+              participante aparecerá listado no Placar e em Minha Cota, e os
+              organizadores registrarão a entrega do comprovante físico em mãos.
             </li>
             <li>
               <strong>Política de estorno automático:</strong> se você pagou por

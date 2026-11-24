@@ -57,6 +57,24 @@ function requireFirebase() {
   return { auth: firebaseAuth, db: firebaseDb };
 }
 
+function normalizeUserProfile(raw: UserProfile): UserProfile {
+  return {
+    ...raw,
+    assignedTicketNumbers: raw.assignedTicketNumbers ?? '',
+    receiptDelivered: Boolean(raw.receiptDelivered),
+    receiptDeliveredAt: raw.receiptDeliveredAt ?? null,
+    receiptDeliveredBy: raw.receiptDeliveredBy ?? null,
+  };
+}
+
+function normalizeBoardEntry(raw: BoardEntry): BoardEntry {
+  return {
+    ...raw,
+    assignedTicketNumbers: raw.assignedTicketNumbers ?? '',
+    receiptDelivered: Boolean(raw.receiptDelivered),
+  };
+}
+
 function toBoardEntry(user: UserProfile): BoardEntry {
   return {
     uid: user.uid,
@@ -67,6 +85,8 @@ function toBoardEntry(user: UserProfile): BoardEntry {
     paymentStatus: user.paymentStatus,
     refundStatus: user.refundStatus,
     refundQuotas: user.refundQuotas,
+    assignedTicketNumbers: user.assignedTicketNumbers ?? '',
+    receiptDelivered: Boolean(user.receiptDelivered),
     createdAt: user.createdAt,
   };
 }
@@ -216,14 +236,14 @@ export function createFirebaseDataService(): DataService {
     async getUserProfile(uid: string): Promise<UserProfile | null> {
       const snap = await getDoc(doc(db, 'users', uid));
       if (!snap.exists()) return null;
-      return snap.data() as UserProfile;
+      return normalizeUserProfile(snap.data() as UserProfile);
     },
 
     async getAllUsers(): Promise<UserProfile[]> {
       const snap = await getDocs(
         query(collection(db, 'users'), orderBy('createdAt', 'asc'))
       );
-      return snap.docs.map((d) => d.data() as UserProfile);
+      return snap.docs.map((d) => normalizeUserProfile(d.data() as UserProfile));
     },
 
     async getBoardEntries(): Promise<BoardEntry[]> {
@@ -231,7 +251,7 @@ export function createFirebaseDataService(): DataService {
         const snap = await getDocs(
           query(collection(db, 'board'), orderBy('createdAt', 'asc'))
         );
-        return snap.docs.map((d) => d.data() as BoardEntry);
+        return snap.docs.map((d) => normalizeBoardEntry(d.data() as BoardEntry));
       } catch {
         return [];
       }
@@ -340,6 +360,10 @@ export function createFirebaseDataService(): DataService {
         refundAmount: 0,
         refundCompletedAt: null,
         refundCompletedBy: null,
+        assignedTicketNumbers: '',
+        receiptDelivered: false,
+        receiptDeliveredAt: null,
+        receiptDeliveredBy: null,
         txid: generateParticipantTxid(pub.edition, input.uid),
         inviteCodeUsed: normalizedCode,
         isModerator: false,
@@ -624,6 +648,43 @@ export function createFirebaseDataService(): DataService {
         actorEmail,
         next.displayName,
         `Alterado de ${oldVal} para ${next.requestedQuotas} cota(s).`
+      );
+    },
+
+    async updateParticipantTicketInfo(uid, input, actorEmail) {
+      const user = await this.getUserProfile(uid);
+      if (!user) return;
+      const details: string[] = [];
+      const next: UserProfile = { ...user, updatedAt: Date.now() };
+
+      if (typeof input.assignedTicketNumbers === 'string') {
+        next.assignedTicketNumbers = input.assignedTicketNumbers.trim();
+        details.push(
+          `Cota(s) bilhete: ${next.assignedTicketNumbers || 'removido'}`
+        );
+      }
+      if (typeof input.receiptDelivered === 'boolean') {
+        next.receiptDelivered = input.receiptDelivered;
+        next.receiptDeliveredAt = input.receiptDelivered ? Date.now() : null;
+        next.receiptDeliveredBy = input.receiptDelivered ? actorEmail : null;
+        details.push(
+          input.receiptDelivered
+            ? 'Comprovante entregue em mãos'
+            : 'Entrega em mãos desmarcada'
+        );
+      }
+
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'users', uid), next);
+      if (next.approvalStatus === 'approved') {
+        batch.set(doc(db, 'board', uid), toBoardEntry(next));
+      }
+      await batch.commit();
+      await logAudit(
+        'Bilhete / Entrega atualizado',
+        actorEmail,
+        next.displayName,
+        details.join(' | ') || 'Atualizado'
       );
     },
 

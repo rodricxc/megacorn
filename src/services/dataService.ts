@@ -82,6 +82,11 @@ export interface DataService {
     requestedQuotas: number,
     actorEmail: string
   ): Promise<void>;
+  updateParticipantTicketInfo(
+    uid: string,
+    input: { assignedTicketNumbers?: string; receiptDelivered?: boolean },
+    actorEmail: string
+  ): Promise<void>;
   toggleModeratorRole(
     uid: string,
     isModerator: boolean,
@@ -118,7 +123,7 @@ export interface DataService {
 export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
   poolName: 'MegaCorn',
   edition: '2027',
-  quotaPrice: 35,
+  quotaPrice: 40.32,
   totalQuotas: 100,
   maxQuotasPerPerson: 3,
   registrationDeadline: '2026-12-18',
@@ -127,6 +132,8 @@ export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
   drawDate: '2026-12-31',
   organizerContact:
     'Dúvidas ou ajustes? Fale com a organização no canal do time ou pelo WhatsApp dos organizadores.',
+  quotaPriceRationale:
+    'Esse valor foi escolhido para ser possível realizar 8 jogos de 9 números na Mega da Virada (total de 672 combinações simples), garantindo exatamente um único comprovante oficial da lotérica por cota.',
   bannerMessage:
     'Inscrições e PIX abertos! Garanta sua espiga da sorte antes do fechamento.',
   rulesExtraNotes:
