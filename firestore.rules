@@ -1,0 +1,160 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isModerator() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isModerator == true;
+    }
+
+    function hasProfile() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function publicFlags() {
+      return get(/databases/$(database)/documents/config/public).data.flags;
+    }
+
+    // Configurações públicas (Regras, prazos, valor da cota e toggles de etapas)
+    match /config/public {
+      allow read: if true;
+      allow write: if isModerator();
+    }
+
+    // Chave PIX: liberada para qualquer participante autenticado que validou convite
+    // (inclusive pendentes de aprovação, conforme regra do MegaCorn) e moderadores
+    match /config/payment {
+      allow read: if hasProfile() || isModerator();
+      allow write: if isModerator();
+    }
+
+    // Credenciais do Google Apps Script e lista de moderadores: SOMENTE moderadores
+    match /config/admin {
+      allow read, write: if isModerator();
+    }
+
+    // Validação do código de convite sem expor lista de códigos
+    match /inviteCodes/{code} {
+      allow get: if isSignedIn();
+      allow list: if isModerator();
+      allow write: if isModerator();
+    }
+
+    // PII sensível (e-mail pessoal + CPF opcional): SOMENTE o próprio usuário e moderadores
+    match /users/{uid} {
+      allow get: if (isSignedIn() && request.auth.uid == uid) || isModerator();
+      allow list: if isModerator();
+
+      // Cadastro inicial permitido somente se registrationsOpen == true (ou por moderador)
+      allow create: if isModerator()
+        || (
+          isSignedIn()
+          && request.auth.uid == uid
+          && publicFlags().registrationsOpen == true
+          && request.resource.data.uid == uid
+          && request.resource.data.isModerator == false
+          && request.resource.data.approvalStatus == 'pending'
+          && request.resource.data.paymentStatus == 'unpaid'
+          && request.resource.data.paidQuotas == 0
+          && exists(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCodeUsed))
+          && get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCodeUsed)).data.active == true
+        );
+
+      // Atualização pelo próprio participante:
+      // - Pode editar displayName e CPF opcional
+      // - Pode editar requestedQuotas somente se quotaEditsOpen == true e ainda não marcou pago
+      // - Pode marcar paymentStatus = 'reported' somente se pixPaymentOpen == true
+      // - Jamais pode alterar isModerator, approvalStatus, paidQuotas, finalQuotas ou refundStatus
+      allow update: if isModerator()
+        || (
+          isSignedIn()
+          && request.auth.uid == uid
+          && request.resource.data.isModerator == resource.data.isModerator
+          && request.resource.data.approvalStatus == resource.data.approvalStatus
+          && request.resource.data.paidQuotas == resource.data.paidQuotas
+          && request.resource.data.finalQuotas == resource.data.finalQuotas
+          && request.resource.data.refundStatus == resource.data.refundStatus
+          && request.resource.data.refundQuotas == resource.data.refundQuotas
+          && request.resource.data.refundAmount == resource.data.refundAmount
+          && request.resource.data.createdAt == resource.data.createdAt
+          && (
+            request.resource.data.requestedQuotas == resource.data.requestedQuotas
+            || (publicFlags().quotaEditsOpen == true && resource.data.paymentStatus == 'unpaid')
+          )
+          && (
+            request.resource.data.paymentStatus == resource.data.paymentStatus
+            || (
+              publicFlags().pixPaymentOpen == true
+              && resource.data.paymentStatus == 'unpaid'
+              && request.resource.data.paymentStatus == 'reported'
+            )
+          )
+        );
+
+      allow delete: if isModerator();
+    }
+
+    // Placar de Transparência (ZERO e-mail, ZERO CPF; apenas participantes aprovados)
+    match /board/{uid} {
+      allow read: if isModerator() || (isSignedIn() && publicFlags().boardVisible == true);
+      allow create, delete: if isModerator();
+      allow update: if isModerator()
+        || (
+          isSignedIn()
+          && request.auth.uid == uid
+          && !('email' in request.resource.data)
+          && !('cpf' in request.resource.data)
+          && request.resource.data.paidQuotas == resource.data.paidQuotas
+          && request.resource.data.finalQuotas == resource.data.finalQuotas
+          && request.resource.data.refundStatus == resource.data.refundStatus
+          && (
+            request.resource.data.requestedQuotas == resource.data.requestedQuotas
+            || (publicFlags().quotaEditsOpen == true && resource.data.paymentStatus == 'unpaid')
+          )
+          && (
+            request.resource.data.paymentStatus == resource.data.paymentStatus
+            || (
+              publicFlags().pixPaymentOpen == true
+              && resource.data.paymentStatus == 'unpaid'
+              && request.resource.data.paymentStatus == 'reported'
+            )
+          )
+        );
+    }
+
+    // Contadores agregados (inclui contagem de pendentes sem expor nomes)
+    match /stats/summary {
+      allow read: if isSignedIn();
+      allow write: if isModerator()
+        || (
+          isSignedIn()
+          && publicFlags().registrationsOpen == true
+          && request.resource.data.approvedCount == resource.data.approvedCount
+          && request.resource.data.pendingApprovalCount == resource.data.pendingApprovalCount + 1
+        );
+    }
+
+    // Jogos apostados e dezenas sorteadas
+    match /games/{gameId} {
+      allow read: if isModerator() || (isSignedIn() && publicFlags().gamesVisible == true);
+      allow write: if isModerator();
+    }
+
+    match /drawResult/current {
+      allow read: if isModerator() || (isSignedIn() && publicFlags().gamesVisible == true);
+      allow write: if isModerator();
+    }
+
+    // Log de auditoria dos moderadores
+    match /auditLog/{logId} {
+      allow read, create: if isModerator();
+      allow update, delete: if false;
+    }
+  }
+}
