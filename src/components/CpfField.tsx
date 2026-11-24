@@ -84,7 +84,7 @@ export function CpfField({
 
       <span className="field-hint" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
         <Lock size={12} />
-        Dado privado (PII): visível apenas para você e para os moderadores — nunca aparece no placar.
+        Dado privado (PII): visível apenas para você e para os moderadores — nunca aparece no placar. Todas as informações serão deletadas em até 30 dias após o sorteio.
       </span>
     </div>
   );

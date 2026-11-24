@@ -327,6 +327,12 @@ export function RulesPage() {
               apenas a você e aos moderadores, e pode ser removido a qualquer
               momento.
             </li>
+            <li>
+              <strong>Exclusão de dados pós-sorteio:</strong> todas as
+              informações cadastradas no site (nomes, e-mails, CPFs e histórico
+              de participação) serão{' '}
+              <strong>deletadas em até 30 dias após o sorteio</strong>.
+            </li>
           </ul>
           <div className="card-mint" style={{ fontSize: '0.88rem' }}>
             <div className="row" style={{ gap: 6 }}>

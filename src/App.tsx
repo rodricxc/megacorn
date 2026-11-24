@@ -35,8 +35,8 @@ export default function App() {
                 <strong>MegaCorn</strong> • Bolão de Fim de Ano do Time 🌽🦄🍀
               </span>
               <span>
-                Privacidade em primeiro lugar: e-mail e CPF isolados (PII) • PIX
-                estático local
+                Privacidade: e-mail e CPF isolados (PII) • Todas as informações
+                serão deletadas em até 30 dias após o sorteio
               </span>
             </div>
           </footer>
