@@ -39,9 +39,9 @@ service cloud.firestore {
       allow read, write: if isModerator();
     }
 
-    // Validação do código de convite sem expor lista de códigos
+    // Validação do código de convite antes do Magic Link sem expor lista de códigos
     match /inviteCodes/{code} {
-      allow get: if isSignedIn();
+      allow get: if true;
       allow list: if isModerator();
       allow write: if isModerator();
     }

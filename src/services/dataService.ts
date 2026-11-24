@@ -125,6 +125,8 @@ export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
   paymentDeadline: '2026-12-22',
   betPlacementDate: '2026-12-28',
   drawDate: '2026-12-31',
+  organizerContact:
+    'Dúvidas ou ajustes? Fale com a organização no canal do time ou pelo WhatsApp dos organizadores.',
   bannerMessage:
     'Inscrições e PIX abertos! Garanta sua espiga da sorte antes do fechamento.',
   rulesExtraNotes:

@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   Clock,
   KeyRound,
+  MessageCircle,
   Save,
   Sparkles,
   Undo2,
@@ -14,6 +15,7 @@ import { PixCard } from '../components/PixCard';
 import { useApp } from '../context/AppContext';
 import { formatCurrencyBr } from '../lib/appsScript';
 import { isValidCpf, sanitizeCpf } from '../lib/cpf';
+import { getRememberedInviteCode } from '../lib/session';
 import { dataService } from '../services';
 
 export function MyQuotaPage() {
@@ -28,8 +30,8 @@ export function MyQuotaPage() {
     refreshAll,
   } = useApp();
 
-  // Form de primeiro cadastro
-  const [inviteCode, setInviteCode] = useState('');
+  // Form de primeiro cadastro (pré-preenche código vindo da URL ou do login)
+  const [inviteCode, setInviteCode] = useState(getRememberedInviteCode());
   const [displayName, setDisplayName] = useState('');
   const [requestedQuotas, setRequestedQuotas] = useState(1);
   const [cpf, setCpf] = useState('');
@@ -520,6 +522,18 @@ export function MyQuotaPage() {
           </div>
         </form>
       </section>
+
+      {publicConfig.organizerContact && (
+        <section className="card-cream stack-xs" id="my-quota-contact-card">
+          <div className="row" style={{ gap: 8 }}>
+            <MessageCircle size={17} color="var(--luck-600)" />
+            <h3>Precisa de ajuda ou quer ajustar após o PIX?</h3>
+          </div>
+          <p style={{ color: 'var(--ink-secondary)', fontSize: '0.9rem' }}>
+            {publicConfig.organizerContact}
+          </p>
+        </section>
+      )}
     </div>
   );
 }

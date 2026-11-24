@@ -663,11 +663,24 @@ export function createFirebaseDataService(): DataService {
     },
 
     async updateAdminConfig(config, actorEmail) {
+      const prev = await this.getAdminConfig();
+      const prevCode = prev?.activeInviteCode?.trim().toUpperCase() || '';
+      const nextCode = config.activeInviteCode.trim().toUpperCase();
+
       const batch = writeBatch(db);
-      batch.set(doc(db, 'config', 'admin'), config);
-      const code = config.activeInviteCode.trim().toUpperCase();
-      if (code) {
-        batch.set(doc(db, 'inviteCodes', code), {
+      batch.set(doc(db, 'config', 'admin'), {
+        ...config,
+        activeInviteCode: nextCode,
+      });
+      if (prevCode && prevCode !== nextCode) {
+        batch.set(
+          doc(db, 'inviteCodes', prevCode),
+          { active: false, updatedAt: Date.now() },
+          { merge: true }
+        );
+      }
+      if (nextCode) {
+        batch.set(doc(db, 'inviteCodes', nextCode), {
           active: true,
           updatedAt: Date.now(),
         });
@@ -677,7 +690,7 @@ export function createFirebaseDataService(): DataService {
         'Integrações/Convite atualizados',
         actorEmail,
         'Admin Config',
-        'Código de convite e configurações do Apps Script atualizados.'
+        `Código de convite (${nextCode || '—'}) e configurações do Apps Script atualizados.`
       );
     },
 

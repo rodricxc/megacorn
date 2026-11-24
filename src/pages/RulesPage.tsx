@@ -337,6 +337,15 @@ export function RulesPage() {
         </section>
       </div>
 
+      {publicConfig.organizerContact && (
+        <section className="card-mint stack-xs" id="rules-contact-section">
+          <h3>Contato dos Organizadores</h3>
+          <p style={{ color: 'var(--ink-secondary)', fontSize: '0.92rem' }}>
+            {publicConfig.organizerContact}
+          </p>
+        </section>
+      )}
+
       <div className="card-gold row-between">
         <div className="row" style={{ gap: 10 }}>
           <Clover size={20} />

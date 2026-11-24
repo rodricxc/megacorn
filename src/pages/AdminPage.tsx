@@ -7,8 +7,10 @@ import {
   Download,
   Eye,
   EyeOff,
+  Link2,
   Lock,
   Mail,
+  Minus,
   Plus,
   RefreshCw,
   Save,
@@ -37,6 +39,7 @@ import {
   formatOneIn,
   parseLotteryNumbers,
 } from '../lib/lottery';
+import { buildInviteShareUrl } from '../lib/session';
 import { dataService } from '../services';
 import type {
   AdminConfig,
@@ -830,12 +833,72 @@ export function AdminPage() {
                         )}
                       </td>
                       <td>
-                        <div style={{ fontSize: '0.84rem' }}>
-                          Pedidas: <strong>{u.requestedQuotas}</strong> (
-                          {formatCurrencyBr(
-                            u.requestedQuotas * publicConfig.quotaPrice
-                          )}
-                          )
+                        <div className="row" style={{ gap: 6, fontSize: '0.84rem' }}>
+                          <span>
+                            Pedidas: <strong>{u.requestedQuotas}</strong> (
+                            {formatCurrencyBr(
+                              u.requestedQuotas * publicConfig.quotaPrice
+                            )}
+                            )
+                          </span>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: '2px 6px' }}
+                            disabled={
+                              busyId === u.uid || u.requestedQuotas <= 1
+                            }
+                            onClick={async () => {
+                              setBusyId(u.uid);
+                              try {
+                                await dataService.updateParticipantQuotasAsAdmin(
+                                  u.uid,
+                                  u.requestedQuotas - 1,
+                                  actorEmail
+                                );
+                                await refreshAll();
+                                showToast(
+                                  'info',
+                                  `Cotas de ${u.displayName} ajustadas para ${u.requestedQuotas - 1}.`
+                                );
+                              } finally {
+                                setBusyId(null);
+                              }
+                            }}
+                            title="Reduzir 1 cota"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: '2px 6px' }}
+                            disabled={
+                              busyId === u.uid ||
+                              u.requestedQuotas >=
+                                publicConfig.maxQuotasPerPerson
+                            }
+                            onClick={async () => {
+                              setBusyId(u.uid);
+                              try {
+                                await dataService.updateParticipantQuotasAsAdmin(
+                                  u.uid,
+                                  u.requestedQuotas + 1,
+                                  actorEmail
+                                );
+                                await refreshAll();
+                                showToast(
+                                  'info',
+                                  `Cotas de ${u.displayName} ajustadas para ${u.requestedQuotas + 1}.`
+                                );
+                              } finally {
+                                setBusyId(null);
+                              }
+                            }}
+                            title="Adicionar 1 cota"
+                          >
+                            <Plus size={12} />
+                          </button>
                         </div>
                         {u.approvalStatus === 'approved' && alloc && (
                           <div style={{ fontSize: '0.78rem', color: 'var(--ink-secondary)' }}>
@@ -1445,6 +1508,24 @@ export function AdminPage() {
               </div>
 
               <div className="field">
+                <label htmlFor="admin-organizer-contact">
+                  Dados de contato dos organizadores (exibido na tela inicial, Regras e Minha Cota)
+                </label>
+                <textarea
+                  id="admin-organizer-contact"
+                  className="textarea"
+                  placeholder="Ex.: Fale com Marina ou Rodrigo no Slack #bolao-megacorn ou WhatsApp (11) 9xxxx-xxxx"
+                  value={pubForm.organizerContact}
+                  onChange={(e) =>
+                    setPubForm({
+                      ...pubForm,
+                      organizerContact: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="field">
                 <label>Nota extra na Página de Regras</label>
                 <textarea
                   className="textarea"
@@ -1460,18 +1541,50 @@ export function AdminPage() {
               <div className="card stack-sm">
                 <h2>Conta PIX &amp; Código de Convite</h2>
                 <div className="field">
-                  <label>Código de convite ativo do time</label>
-                  <input
-                    type="text"
-                    className="input mono"
-                    value={admForm.activeInviteCode}
-                    onChange={(e) =>
-                      setAdmForm({
-                        ...admForm,
-                        activeInviteCode: e.target.value.toUpperCase(),
-                      })
-                    }
-                  />
+                  <label htmlFor="admin-invite-code">
+                    Código de convite ativo do time (exigido no cadastro de e-mail)
+                  </label>
+                  <div className="row" style={{ gap: 8 }}>
+                    <input
+                      id="admin-invite-code"
+                      type="text"
+                      className="input mono"
+                      style={{ flex: 1 }}
+                      value={admForm.activeInviteCode}
+                      onChange={(e) =>
+                        setAdmForm({
+                          ...admForm,
+                          activeInviteCode: e.target.value.toUpperCase(),
+                        })
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-unicorn btn-sm"
+                      onClick={async () => {
+                        const shareUrl = buildInviteShareUrl(
+                          admForm.activeInviteCode
+                        );
+                        await navigator.clipboard.writeText(shareUrl);
+                        showToast(
+                          'success',
+                          `Link de convite copiado: ${shareUrl}`
+                        );
+                      }}
+                      id="btn-copy-invite-link"
+                    >
+                      <Link2 size={14} />
+                      Copiar link (?convite=)
+                    </button>
+                  </div>
+                  <span className="field-hint">
+                    Ao alterar e salvar, o código anterior é desativado
+                    automaticamente no Firestore. Quem abrir{' '}
+                    <code className="mono">
+                      ?convite={admForm.activeInviteCode || 'CODIGO'}
+                    </code>{' '}
+                    já chega com o código preenchido!
+                  </span>
                 </div>
                 <div className="field">
                   <label>Chave PIX do organizador</label>

@@ -289,7 +289,18 @@ function loadState(): DemoState {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      return JSON.parse(raw) as DemoState;
+      const parsed = JSON.parse(raw) as DemoState;
+      return {
+        ...parsed,
+        publicConfig: {
+          ...DEFAULT_PUBLIC_CONFIG,
+          ...parsed.publicConfig,
+          flags: {
+            ...DEFAULT_PUBLIC_CONFIG.flags,
+            ...(parsed.publicConfig?.flags || {}),
+          },
+        },
+      };
     }
   } catch {
     // ignore

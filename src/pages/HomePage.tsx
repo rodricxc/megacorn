@@ -3,7 +3,9 @@ import {
   BookOpen,
   CheckCircle2,
   Clover,
+  KeyRound,
   Mail,
+  MessageCircle,
   ShieldCheck,
   Sparkles,
   User,
@@ -13,14 +15,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Timeline } from '../components/Timeline';
 import { useApp } from '../context/AppContext';
 import { formatCurrencyBr } from '../lib/appsScript';
-import { getSessionCookieHint } from '../lib/session';
+import {
+  extractInviteCodeFromUrl,
+  getRememberedInviteCode,
+  getSessionCookieHint,
+  rememberInviteCode,
+} from '../lib/session';
 import { dataService } from '../services';
 
 export function HomePage() {
   const { authUser, profile, publicConfig, isDemoMode } = useApp();
   const navigate = useNavigate();
 
+  const urlInviteCode = extractInviteCodeFromUrl();
   const [email, setEmail] = useState(getSessionCookieHint() || '');
+  const [inviteCode, setInviteCode] = useState(getRememberedInviteCode());
   const [sending, setSending] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,15 +37,30 @@ export function HomePage() {
   async function handleSendMagicLink(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const clean = email.trim().toLowerCase();
-    if (!clean || !clean.includes('@')) {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCode = inviteCode.trim().toUpperCase();
+
+    if (!cleanCode) {
+      setError('Informe o código de convite do time para solicitar acesso.');
+      return;
+    }
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       setError('Informe um endereço de e-mail pessoal válido.');
       return;
     }
+
     setSending(true);
     try {
-      await dataService.sendMagicLink(clean, '/minha-cota');
-      setSentTo(clean);
+      const validCode = await dataService.validateInviteCode(cleanCode);
+      if (!validCode) {
+        setError(
+          'Código de convite inválido ou desativado. Confira o link ou peça o código atualizado aos organizadores.'
+        );
+        return;
+      }
+      rememberInviteCode(cleanCode);
+      await dataService.sendMagicLink(cleanEmail, '/minha-cota');
+      setSentTo(cleanEmail);
     } catch (err) {
       setError(
         err instanceof Error
@@ -155,11 +179,22 @@ export function HomePage() {
             <div>
               <h2>Entrar com Magic Link (sem senha)</h2>
               <p style={{ color: 'var(--ink-secondary)', fontSize: '0.92rem', marginTop: 4 }}>
-                Use seu <strong>e-mail pessoal</strong>. Enviaremos um link de
-                acesso rápido e sua sessão ficará salva neste navegador até você
-                clicar em <strong>Sair</strong>.
+                Informe o <strong>código de convite</strong> e seu{' '}
+                <strong>e-mail pessoal</strong>. Enviaremos um link de acesso
+                rápido e sua sessão ficará salva neste navegador até você clicar
+                em <strong>Sair</strong>.
               </p>
             </div>
+
+            {urlInviteCode && !sentTo && (
+              <div className="alert alert-success">
+                <KeyRound size={17} style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>
+                  Código de convite <strong className="mono">{urlInviteCode}</strong>{' '}
+                  preenchido automaticamente pelo link!
+                </span>
+              </div>
+            )}
 
             {sentTo ? (
               <div className="stack-sm">
@@ -206,6 +241,25 @@ export function HomePage() {
             ) : (
               <form onSubmit={handleSendMagicLink} className="stack-sm">
                 <div className="field">
+                  <label htmlFor="login-invite-code-input">
+                    Código de convite do time
+                  </label>
+                  <input
+                    id="login-invite-code-input"
+                    type="text"
+                    required
+                    className="input mono"
+                    placeholder="Ex.: MEGACORN2026"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                  />
+                  <span className="field-hint">
+                    Obrigatório para cadastro e acesso. Também aceito direto pela
+                    URL (<code>?convite=CODIGO</code>).
+                  </span>
+                </div>
+
+                <div className="field">
                   <label htmlFor="login-email-input">Seu e-mail pessoal</label>
                   <input
                     id="login-email-input"
@@ -216,9 +270,6 @@ export function HomePage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
-                  <span className="field-hint">
-                    No primeiro acesso você informará o código de convite do time.
-                  </span>
                 </div>
 
                 {error && <div className="alert alert-danger">{error}</div>}
@@ -230,9 +281,23 @@ export function HomePage() {
                   id="btn-send-magic-link"
                 >
                   <Mail size={16} />
-                  {sending ? 'Enviando link...' : 'Receber link de acesso no e-mail'}
+                  {sending
+                    ? 'Validando e enviando...'
+                    : 'Validar convite e receber link no e-mail'}
                 </button>
               </form>
+            )}
+
+            {publicConfig.organizerContact && (
+              <div className="card-cream" style={{ fontSize: '0.85rem' }}>
+                <div className="row" style={{ gap: 6 }}>
+                  <MessageCircle size={15} color="var(--luck-600)" />
+                  <strong>Contato dos organizadores</strong>
+                </div>
+                <p style={{ color: 'var(--ink-secondary)', marginTop: 4 }}>
+                  {publicConfig.organizerContact}
+                </p>
+              </div>
             )}
           </div>
 
@@ -246,7 +311,7 @@ export function HomePage() {
 
             <div className="stack-sm" style={{ fontSize: '0.92rem' }}>
               <div className="card-cream">
-                <strong>1. Entre com seu e-mail + código de convite</strong>
+                <strong>1. Entre com código de convite + seu e-mail</strong>
                 <p style={{ color: 'var(--ink-secondary)', marginTop: 2 }}>
                   Sem criar senha. O código garante que só o time participe, com
                   revisão dos moderadores.

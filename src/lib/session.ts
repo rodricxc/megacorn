@@ -6,8 +6,10 @@
 
 const SIGNIN_EMAIL_COOKIE = 'megacorn_signin_email';
 const SESSION_HINT_COOKIE = 'megacorn_session_hint';
+const INVITE_CODE_COOKIE = 'megacorn_invite_code';
 const REDIRECT_KEY = 'megacorn_post_login_redirect';
 const SIGNIN_EMAIL_LS = 'megacorn_email_for_signin';
+const INVITE_CODE_LS = 'megacorn_invite_code_ls';
 
 function setCookie(name: string, value: string, maxAgeSeconds: number): void {
   const encoded = encodeURIComponent(value);
@@ -108,11 +110,78 @@ export function clearAllSessionArtifacts(): void {
 }
 
 /**
- * Monta a URL de retorno na raiz do site (compatível com GitHub Pages + HashRouter).
+ * Extrai o código de convite da URL, aceitando `?convite=`, `?invite=` ou `?code=`
+ * tanto na query string raiz quanto dentro do hash (`#/?convite=...`).
+ */
+export function extractInviteCodeFromUrl(): string | null {
+  const keys = ['convite', 'invite', 'code'];
+
+  const searchParams = new URLSearchParams(window.location.search);
+  for (const key of keys) {
+    const val = searchParams.get(key);
+    if (val && val.trim()) return val.trim().toUpperCase();
+  }
+
+  const hash = window.location.hash || '';
+  const qIdx = hash.indexOf('?');
+  if (qIdx !== -1) {
+    const hashParams = new URLSearchParams(hash.slice(qIdx + 1));
+    for (const key of keys) {
+      const val = hashParams.get(key);
+      if (val && val.trim()) return val.trim().toUpperCase();
+    }
+  }
+
+  return null;
+}
+
+export function rememberInviteCode(code: string): void {
+  const clean = code.trim().toUpperCase();
+  if (!clean) return;
+  try {
+    window.localStorage.setItem(INVITE_CODE_LS, clean);
+  } catch {
+    // ignore
+  }
+  setCookie(INVITE_CODE_COOKIE, clean, 60 * 60 * 24 * 7);
+}
+
+export function getRememberedInviteCode(): string {
+  const fromUrl = extractInviteCodeFromUrl();
+  if (fromUrl) {
+    rememberInviteCode(fromUrl);
+    return fromUrl;
+  }
+  try {
+    const fromLs = window.localStorage.getItem(INVITE_CODE_LS);
+    if (fromLs) return fromLs;
+  } catch {
+    // ignore
+  }
+  return getCookie(INVITE_CODE_COOKIE) || '';
+}
+
+export function buildInviteShareUrl(code: string): string {
+  const base = `${window.location.origin}${window.location.pathname}`;
+  const url = new URL(base);
+  const clean = code.trim().toUpperCase();
+  if (clean) {
+    url.searchParams.set('convite', clean);
+  }
+  return url.toString();
+}
+
+/**
+ * Monta a URL de retorno na raiz do site (compatível com GitHub Pages + HashRouter),
+ * preservando o código de convite se disponível.
  */
 export function buildMagicLinkReturnUrl(redirectPath = '/minha-cota'): string {
   const base = `${window.location.origin}${window.location.pathname}`;
   const url = new URL(base);
   url.searchParams.set('redirect', redirectPath);
+  const invite = getRememberedInviteCode();
+  if (invite) {
+    url.searchParams.set('convite', invite);
+  }
   return url.toString();
 }

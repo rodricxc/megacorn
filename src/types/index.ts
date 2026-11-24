@@ -23,6 +23,7 @@ export interface PublicConfig {
   paymentDeadline: string; // data limite para pagamento PIX (ex: "2026-12-22")
   betPlacementDate: string; // data de realizar a aposta na lotérica (ex: "2026-12-28")
   drawDate: string; // data do sorteio (ex: "2026-12-31")
+  organizerContact: string; // dados de contato dos administradores (Slack, WhatsApp, e-mail)
   bannerMessage: string;
   rulesExtraNotes: string;
   flags: StageToggles;
