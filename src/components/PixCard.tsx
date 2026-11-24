@@ -23,7 +23,7 @@ export function PixCard({
   onReportPaid,
 }: PixCardProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
-  const [copied, setCopied] = useState<'pix' | 'txid' | null>(null);
+  const [copied, setCopied] = useState(false);
   const [note, setNote] = useState(profile.paymentNote || '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,11 +68,11 @@ export function PixCard({
     };
   }, [pixPayload]);
 
-  async function handleCopy(text: string, type: 'pix' | 'txid') {
+  async function handleCopy(text: string) {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(type);
-      setTimeout(() => setCopied(null), 2200);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
     } catch {
       setError('Não foi possível copiar automaticamente. Selecione e copie o código.');
     }
@@ -163,44 +163,28 @@ export function PixCard({
           </div>
 
           <div className="stack-sm">
-            <div className="grid-2" style={{ gap: 10 }}>
-              <div className="card-cream">
-                <div className="stat-label">Valor exato ({profile.requestedQuotas} cota{profile.requestedQuotas > 1 ? 's' : ''})</div>
-                <div className="stat-value" style={{ fontSize: '1.4rem' }}>
-                  {formatCurrencyBr(amount)}
-                </div>
+            <div className="card-cream">
+              <div className="stat-label">
+                Valor exato ({profile.requestedQuotas} cota
+                {profile.requestedQuotas > 1 ? 's' : ''})
               </div>
-              <div className="card-cream">
-                <div className="stat-label">Identificador no extrato (TXID)</div>
-                <div className="row" style={{ marginTop: 6, gap: 6 }}>
-                  <span className="mono" style={{ fontWeight: 700, fontSize: '0.92rem' }}>
-                    {profile.txid}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => handleCopy(profile.txid, 'txid')}
-                    id="btn-copy-txid"
-                  >
-                    {copied === 'txid' ? <Check size={13} /> : <Copy size={13} />}
-                    {copied === 'txid' ? 'Copiado' : 'Copiar'}
-                  </button>
-                </div>
+              <div className="stat-value" style={{ fontSize: '1.5rem' }}>
+                {formatCurrencyBr(amount)}
               </div>
             </div>
 
             <div className="field">
-              <label>PIX Copia e Cola (valor e TXID já preenchidos)</label>
+              <label>PIX Copia e Cola (valor já preenchido)</label>
               <div className="pix-code-box">{pixPayload}</div>
               <div className="row">
                 <button
                   type="button"
                   className="btn btn-gold"
-                  onClick={() => handleCopy(pixPayload, 'pix')}
+                  onClick={() => handleCopy(pixPayload)}
                   id="btn-copy-pix-code"
                 >
-                  {copied === 'pix' ? <Check size={16} /> : <Copy size={16} />}
-                  {copied === 'pix' ? 'Código PIX copiado!' : 'Copiar PIX Copia e Cola'}
+                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                  {copied ? 'Código PIX copiado!' : 'Copiar PIX Copia e Cola'}
                 </button>
                 <span className="field-hint">
                   Recebedor: <strong>{paymentConfig.merchantName}</strong> ({paymentConfig.merchantCity})
@@ -220,10 +204,9 @@ export function PixCard({
           <div>
             <h3>Já realizou o pagamento?</h3>
             <p className="field-hint" style={{ color: 'var(--ink-secondary)' }}>
-              Não é necessário enviar foto do comprovante — conferimos pelo seu TXID{' '}
-              <strong className="mono">{profile.txid}</strong> direto no extrato.
-              Após clicar abaixo, a quantidade de cotas fica travada para evitar
-              diferença de valor.
+              Não é necessário enviar foto do comprovante — conferimos o
+              recebimento direto no extrato. Após clicar abaixo, a quantidade de
+              cotas fica travada para evitar diferença de valor.
             </p>
           </div>
           <div className="field">
@@ -263,9 +246,9 @@ export function PixCard({
       {profile.paymentStatus === 'reported' && (
         <div className="alert alert-warning">
           <div>
-            <strong>Aviso de PIX registrado!</strong> Os organizadores vão conferir o
-            código <span className="mono">{profile.txid}</span> no extrato e confirmar
-            sua participação em breve.
+            <strong>Aviso de PIX registrado!</strong> Os organizadores vão
+            conferir o recebimento no extrato e confirmar sua participação em
+            breve.
             {profile.paymentNote && (
               <div style={{ marginTop: 4 }}>
                 Sua observação: <em>“{profile.paymentNote}”</em>
