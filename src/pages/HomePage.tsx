@@ -129,7 +129,7 @@ export function HomePage() {
                     className="btn btn-primary btn-mobile-full"
                     id="hero-go-my-quota"
                   >
-                    Ir para Minha Cota
+                    Ir para Minhas Cotas
                     <ArrowRight size={16} aria-hidden="true" />
                   </Link>
                   {profile?.isModerator && (

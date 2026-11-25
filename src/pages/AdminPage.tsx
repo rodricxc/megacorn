@@ -2237,7 +2237,7 @@ export function AdminPage() {
 
               <div className="field">
                 <label htmlFor="admin-organizer-contact">
-                  Dados de contato dos organizadores (exibido na tela inicial, Regras e Minha Cota)
+                  Dados de contato dos organizadores (exibido na tela inicial, Regras e Minhas Cotas)
                 </label>
                 <textarea
                   id="admin-organizer-contact"

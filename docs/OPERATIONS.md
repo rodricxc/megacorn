@@ -30,7 +30,7 @@ No painel **Admin → Etapas & Fechamento**, use o **Controlador da Timeline** (
      1. Cadastre todos os jogos na aba **Admin → Jogos & Sorteio** (com conferência automática das probabilidades).
      2. Ligue o toggle **Visibilidade de Jogos & Probabilidades**.
      3. Avance a timeline para **Aposta feita** — isso desbloqueia a coluna **Bilhete / Entrega em Mãos** na tabela de participantes.
-     4. Preencha o **Nº da(s) cota(s) do bilhete** (ex.: `#14` ou `#14, #52`) para cada participante e clique no ícone de salvar (aparece automaticamente no Placar e em Minha Cota).
+     4. Preencha o **Nº da(s) cota(s) do bilhete** (ex.: `#14` ou `#14, #52`) para cada participante e clique no ícone de salvar (aparece automaticamente no Placar e em Minhas Cotas).
 
 5. **Bilhetes sendo entregues**
    - Avance para **Bilhetes sendo entregues**.

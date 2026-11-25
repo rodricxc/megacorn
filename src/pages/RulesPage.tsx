@@ -39,7 +39,7 @@ export function RulesPage() {
             id="rules-cta-participate"
           >
             {authUser
-              ? 'Ir para Minha Cota'
+              ? 'Ir para Minhas Cotas'
               : publicConfig.flags.registrationsOpen
                 ? 'Participar agora'
                 : 'Acessar minha conta'}
@@ -277,7 +277,7 @@ export function RulesPage() {
               <strong>Bilhete físico e número da cota:</strong> assim que os
               jogos forem registrados na lotérica, o{' '}
               <strong>número da(s) cota(s) assinalado</strong> para cada
-              participante aparecerá listado no Placar e em Minha Cota, e os
+              participante aparecerá listado no Placar e em Minhas Cotas, e os
               organizadores registrarão a entrega do comprovante físico em mãos.
             </li>
             <li>
@@ -373,7 +373,7 @@ export function RulesPage() {
           to={authUser ? '/minha-cota' : '/'}
           className="btn btn-primary btn-sm btn-mobile-full"
         >
-          {authUser ? 'Ver Minha Cota' : 'Fazer login'}
+          {authUser ? 'Ver Minhas Cotas' : 'Fazer login'}
         </Link>
       </div>
     </div>

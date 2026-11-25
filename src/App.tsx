@@ -14,7 +14,7 @@ import { RulesPage } from './pages/RulesPage';
 const ROUTE_TITLES: Record<string, string> = {
   '/': 'Início e Login — MegaCorn',
   '/regras': 'Regras e Funcionamento — MegaCorn',
-  '/minha-cota': 'Minha Cota e Pagamento PIX — MegaCorn',
+  '/minha-cota': 'Minhas Cotas e Pagamento PIX — MegaCorn',
   '/placar': 'Placar de Transparência — MegaCorn',
   '/jogos': 'Jogos, Probabilidades e Conferidor — MegaCorn',
   '/admin': 'Painel dos Moderadores — MegaCorn',

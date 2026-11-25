@@ -59,7 +59,7 @@ export function Navbar() {
                 id="nav-my-quota"
               >
                 <Ticket size={15} aria-hidden="true" />
-                Minha Cota
+                Minhas Cotas
               </NavLink>
 
               {(publicConfig.flags.boardVisible || profile?.isModerator) && (
