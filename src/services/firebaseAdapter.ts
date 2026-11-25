@@ -624,6 +624,36 @@ export function createFirebaseDataService(): DataService {
       );
     },
 
+    async cancelRefund(uid, actorEmail) {
+      const user = await this.getUserProfile(uid);
+      if (!user || user.refundStatus === 'none') return;
+      const prevStatus = user.refundStatus;
+      const prevQuotas = user.refundQuotas;
+      const prevAmount = user.refundAmount;
+      const next: UserProfile = {
+        ...user,
+        refundStatus: 'none',
+        refundQuotas: 0,
+        refundAmount: 0,
+        refundCompletedAt: null,
+        refundCompletedBy: null,
+        updatedAt: Date.now(),
+      };
+
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'users', uid), next);
+      if (next.approvalStatus === 'approved') {
+        batch.set(doc(db, 'board', uid), toBoardEntry(next));
+      }
+      await batch.commit();
+      await logAudit(
+        'Estorno cancelado',
+        actorEmail,
+        next.displayName,
+        `Estorno (${prevStatus === 'completed' ? 'concluído' : 'pendente'}) de ${prevQuotas} cota(s) (R$ ${prevAmount.toFixed(2)}) cancelado pelo moderador.`
+      );
+    },
+
     async updateParticipantQuotasAsAdmin(uid, requestedQuotas, actorEmail) {
       const user = await this.getUserProfile(uid);
       if (!user) return;
@@ -896,6 +926,127 @@ export function createFirebaseDataService(): DataService {
         `${count} CPF(s) removidos permanentemente.`
       );
       return count;
+    },
+
+    async resetPoolDatabaseKeepingAdmins(actorEmail) {
+      const [pub, allUsers, boardSnap, gamesSnap] = await Promise.all([
+        this.getPublicConfig(),
+        this.getAllUsers(),
+        getDocs(collection(db, 'board')),
+        getDocs(collection(db, 'games')),
+      ]);
+
+      const admins = allUsers.filter((u) => u.isModerator);
+      if (admins.length === 0) {
+        throw new Error(
+          'Nenhum moderador encontrado — restauração cancelada para não perder o acesso administrativo.'
+        );
+      }
+
+      const adminUids = new Set(admins.map((a) => a.uid));
+      const nonAdmins = allUsers.filter((u) => !u.isModerator);
+      const now = Date.now();
+
+      type BatchOp = (batch: ReturnType<typeof writeBatch>) => void;
+      const ops: BatchOp[] = [];
+
+      // Preserva os moderadores com cadastro aprovado e estado financeiro limpo
+      for (const admin of admins) {
+        const resetAdmin: UserProfile = {
+          ...admin,
+          cpf: '',
+          requestedQuotas: 1,
+          approvalStatus: 'approved',
+          paymentStatus: 'unpaid',
+          paymentReportedAt: null,
+          paymentConfirmedAt: null,
+          paymentConfirmedBy: null,
+          paymentNote: '',
+          paidQuotas: 0,
+          finalQuotas: null,
+          refundStatus: 'none',
+          refundQuotas: 0,
+          refundAmount: 0,
+          refundCompletedAt: null,
+          refundCompletedBy: null,
+          assignedTicketNumbers: '',
+          receiptDelivered: false,
+          receiptDeliveredAt: null,
+          receiptDeliveredBy: null,
+          isModerator: true,
+          updatedAt: now,
+        };
+        ops.push((b) => b.set(doc(db, 'users', admin.uid), resetAdmin));
+        ops.push((b) =>
+          b.set(doc(db, 'board', admin.uid), toBoardEntry(resetAdmin))
+        );
+      }
+
+      // Remove participantes não-moderadores e quaisquer entradas órfãs do placar
+      for (const u of nonAdmins) {
+        ops.push((b) => b.delete(doc(db, 'users', u.uid)));
+      }
+      for (const d of boardSnap.docs) {
+        if (!adminUids.has(d.id)) {
+          ops.push((b) => b.delete(d.ref));
+        }
+      }
+
+      // Remove todos os volantes cadastrados
+      for (const g of gamesSnap.docs) {
+        ops.push((b) => b.delete(g.ref));
+      }
+
+      // Limpa resultado do sorteio, contadores e reabre fase inicial mantendo configurações
+      ops.push((b) =>
+        b.set(doc(db, 'drawResult', 'current'), {
+          numbers: [],
+          updatedAt: now,
+          updatedBy: actorEmail,
+        })
+      );
+      ops.push((b) =>
+        b.set(doc(db, 'stats', 'summary'), {
+          approvedCount: admins.length,
+          pendingApprovalCount: 0,
+        })
+      );
+      ops.push((b) =>
+        b.set(doc(db, 'config', 'public'), {
+          ...pub,
+          currentPhase: 'registration',
+          flags: {
+            registrationsOpen: true,
+            quotaEditsOpen: true,
+            pixPaymentOpen: true,
+            boardVisible: true,
+            gamesVisible: true,
+            poolClosed: false,
+          },
+        })
+      );
+
+      const CHUNK_SIZE = 400;
+      for (let i = 0; i < ops.length; i += CHUNK_SIZE) {
+        const batch = writeBatch(db);
+        for (const op of ops.slice(i, i + CHUNK_SIZE)) {
+          op(batch);
+        }
+        await batch.commit();
+      }
+
+      await logAudit(
+        'Base de dados restaurada',
+        actorEmail,
+        pub.poolName,
+        `${nonAdmins.length} participante(s) e ${gamesSnap.docs.length} volante(s) removidos; ${admins.length} moderador(es) e configurações preservados.`
+      );
+
+      return {
+        removedParticipants: nonAdmins.length,
+        removedGames: gamesSnap.docs.length,
+        preservedAdmins: admins.length,
+      };
     },
 
     async addGame(game, actorEmail) {

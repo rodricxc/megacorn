@@ -77,6 +77,7 @@ export interface DataService {
     actorEmail: string
   ): Promise<void>;
   markRefundCompleted(uid: string, actorEmail: string): Promise<void>;
+  cancelRefund(uid: string, actorEmail: string): Promise<void>;
   updateParticipantQuotasAsAdmin(
     uid: string,
     requestedQuotas: number,
@@ -102,6 +103,11 @@ export interface DataService {
   }>;
   reopenPool(actorEmail: string): Promise<void>;
   purgeAllCpfs(actorEmail: string): Promise<number>;
+  resetPoolDatabaseKeepingAdmins(actorEmail: string): Promise<{
+    removedParticipants: number;
+    removedGames: number;
+    preservedAdmins: number;
+  }>;
 
   // Jogos e sorteio
   addGame(

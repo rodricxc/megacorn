@@ -777,6 +777,29 @@ export function createDemoDataService(): DataService {
       saveState(state);
     },
 
+    async cancelRefund(uid, actorEmail) {
+      const state = loadState();
+      const user = state.users[uid];
+      if (!user || user.refundStatus === 'none') return;
+      const prevStatus = user.refundStatus;
+      const prevQuotas = user.refundQuotas;
+      const prevAmount = user.refundAmount;
+      user.refundStatus = 'none';
+      user.refundQuotas = 0;
+      user.refundAmount = 0;
+      user.refundCompletedAt = null;
+      user.refundCompletedBy = null;
+      user.updatedAt = Date.now();
+      appendLog(
+        state,
+        'Estorno cancelado',
+        actorEmail,
+        user.displayName,
+        `Estorno (${prevStatus === 'completed' ? 'concluído' : 'pendente'}) de ${prevQuotas} cota(s) (R$ ${prevAmount.toFixed(2)}) cancelado pelo moderador.`
+      );
+      saveState(state);
+    },
+
     async updateParticipantQuotasAsAdmin(uid, requestedQuotas, actorEmail) {
       const state = loadState();
       const user = state.users[uid];
@@ -996,6 +1019,84 @@ export function createDemoDataService(): DataService {
       );
       saveState(state);
       return count;
+    },
+
+    async resetPoolDatabaseKeepingAdmins(actorEmail) {
+      const state = loadState();
+      const allUsers = Object.values(state.users);
+      const admins = allUsers.filter((u) => u.isModerator);
+      if (admins.length === 0) {
+        throw new Error(
+          'Nenhum moderador encontrado — restauração cancelada para não perder o acesso administrativo.'
+        );
+      }
+
+      const removedParticipants = allUsers.length - admins.length;
+      const removedGames = state.games.length;
+      const now = Date.now();
+      const nextUsers: Record<string, UserProfile> = {};
+
+      for (const admin of admins) {
+        nextUsers[admin.uid] = {
+          ...admin,
+          cpf: '',
+          requestedQuotas: 1,
+          approvalStatus: 'approved',
+          paymentStatus: 'unpaid',
+          paymentReportedAt: null,
+          paymentConfirmedAt: null,
+          paymentConfirmedBy: null,
+          paymentNote: '',
+          paidQuotas: 0,
+          finalQuotas: null,
+          refundStatus: 'none',
+          refundQuotas: 0,
+          refundAmount: 0,
+          refundCompletedAt: null,
+          refundCompletedBy: null,
+          assignedTicketNumbers: '',
+          receiptDelivered: false,
+          receiptDeliveredAt: null,
+          receiptDeliveredBy: null,
+          isModerator: true,
+          updatedAt: now,
+        };
+      }
+
+      state.users = nextUsers;
+      state.games = [];
+      state.drawResult = {
+        numbers: [],
+        updatedAt: now,
+        updatedBy: actorEmail,
+      };
+      state.publicConfig = {
+        ...state.publicConfig,
+        currentPhase: 'registration',
+        flags: {
+          registrationsOpen: true,
+          quotaEditsOpen: true,
+          pixPaymentOpen: true,
+          boardVisible: true,
+          gamesVisible: true,
+          poolClosed: false,
+        },
+      };
+
+      appendLog(
+        state,
+        'Base de dados restaurada',
+        actorEmail,
+        state.publicConfig.poolName,
+        `${removedParticipants} participante(s) e ${removedGames} volante(s) removidos; ${admins.length} moderador(es) e configurações preservados.`
+      );
+      saveState(state);
+
+      return {
+        removedParticipants,
+        removedGames,
+        preservedAdmins: admins.length,
+      };
     },
 
     async addGame(game, actorEmail) {

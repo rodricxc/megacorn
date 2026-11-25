@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   Check,
   CheckCircle2,
   ClipboardList,
@@ -25,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useApp } from '../context/AppContext';
 import {
   buildWhatsappReminderText,
@@ -50,6 +52,7 @@ import { dataService } from '../services';
 import type {
   AdminConfig,
   EmailActionType,
+  LotteryGame,
   PaymentConfig,
   PoolPhase,
   PublicConfig,
@@ -58,6 +61,16 @@ import type {
 } from '../types';
 
 type AdminTab = 'participants' | 'stages' | 'games' | 'settings' | 'audit';
+
+interface PendingConfirm {
+  title: string;
+  description: string;
+  details?: string[];
+  confirmLabel: string;
+  variant?: 'danger' | 'warning';
+  requireTypedText?: string;
+  onConfirm: () => Promise<void>;
+}
 
 export function AdminPage() {
   const {
@@ -95,6 +108,8 @@ export function AdminPage() {
   } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [autoSendEmail, setAutoSendEmail] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
 
   // Forms editáveis
   const [pubForm, setPubForm] = useState<PublicConfig>(publicConfig);
@@ -310,39 +325,96 @@ export function AdminPage() {
     }
   }
 
-  async function handleReject(user: UserProfile) {
-    setBusyId(user.uid);
+  async function executeConfirm() {
+    if (!pendingConfirm) return;
+    setConfirmBusy(true);
     try {
-      await dataService.rejectParticipant(user.uid, actorEmail);
-      await refreshAll();
+      await pendingConfirm.onConfirm();
+      setPendingConfirm(null);
+    } catch (err) {
       showToast(
-        'info',
-        user.paidQuotas > 0
-          ? `${user.displayName} recusado(a) — estorno pendente criado automaticamente.`
-          : `${user.displayName} recusado(a).`
+        'danger',
+        err instanceof Error ? err.message : 'Erro ao executar a ação.'
       );
-      if (autoSendEmail) {
-        await dispatchEmail(user, 'rejection');
-      }
+      setPendingConfirm(null);
     } finally {
-      setBusyId(null);
+      setConfirmBusy(false);
     }
   }
 
-  async function handleCancel(user: UserProfile) {
-    setBusyId(user.uid);
-    try {
-      await dataService.cancelParticipant(user.uid, actorEmail);
-      await refreshAll();
-      showToast(
-        'info',
+  function handleReject(user: UserProfile) {
+    setPendingConfirm({
+      title: `Recusar inscrição de ${user.displayName}?`,
+      description:
         user.paidQuotas > 0
-          ? `${user.displayName} cancelado(a) — estorno pendente registrado.`
-          : `Participação de ${user.displayName} cancelada.`
-      );
-    } finally {
-      setBusyId(null);
-    }
+          ? `Este participante já tem ${user.paidQuotas} cota(s) paga(s). Ao recusar, será registrado um estorno integral pendente automaticamente.`
+          : 'A inscrição será marcada como recusada e o participante perderá acesso ao placar e aos jogos.',
+      details: [
+        `Participante: ${user.displayName} (${user.email})`,
+        `Cotas solicitadas: ${user.requestedQuotas}`,
+        ...(user.paidQuotas > 0
+          ? [
+              `Estorno automático previsto: ${formatCurrencyBr(user.paidQuotas * publicConfig.quotaPrice)}`,
+            ]
+          : []),
+      ],
+      confirmLabel: 'Confirmar recusa',
+      variant: 'danger',
+      onConfirm: async () => {
+        setBusyId(user.uid);
+        try {
+          await dataService.rejectParticipant(user.uid, actorEmail);
+          await refreshAll();
+          showToast(
+            'info',
+            user.paidQuotas > 0
+              ? `${user.displayName} recusado(a) — estorno pendente criado automaticamente.`
+              : `${user.displayName} recusado(a).`
+          );
+          if (autoSendEmail) {
+            await dispatchEmail(user, 'rejection');
+          }
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
+  }
+
+  function handleCancel(user: UserProfile) {
+    setPendingConfirm({
+      title: `Cancelar participação de ${user.displayName}?`,
+      description:
+        user.paidQuotas > 0
+          ? `Este participante já possui ${user.paidQuotas} cota(s) paga(s). O cancelamento removerá o nome do placar e gerará um estorno integral pendente.`
+          : 'O participante será removido do placar e terá a participação marcada como cancelada.',
+      details: [
+        `Participante: ${user.displayName} (${user.email})`,
+        `Cotas pagas: ${user.paidQuotas} | Solicitadas: ${user.requestedQuotas}`,
+        ...(user.paidQuotas > 0
+          ? [
+              `Estorno integral pendente: ${formatCurrencyBr(user.paidQuotas * publicConfig.quotaPrice)}`,
+            ]
+          : []),
+      ],
+      confirmLabel: 'Confirmar cancelamento',
+      variant: 'danger',
+      onConfirm: async () => {
+        setBusyId(user.uid);
+        try {
+          await dataService.cancelParticipant(user.uid, actorEmail);
+          await refreshAll();
+          showToast(
+            'info',
+            user.paidQuotas > 0
+              ? `${user.displayName} cancelado(a) — estorno pendente registrado.`
+              : `Participação de ${user.displayName} cancelada.`
+          );
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
   async function handleConfirmPix(user: UserProfile) {
@@ -377,6 +449,69 @@ export function AdminPage() {
       }
     } finally {
       setBusyId(null);
+    }
+  }
+
+  function handleCancelRefund(user: UserProfile) {
+    const statusLabel =
+      user.refundStatus === 'completed' ? 'concluído' : 'pendente';
+    setPendingConfirm({
+      title: `Cancelar estorno de ${user.displayName}?`,
+      description: `O registro de estorno (${statusLabel}) será removido da ficha do participante e do placar.`,
+      details: [
+        `Participante: ${user.displayName}`,
+        `Estorno atual: ${user.refundQuotas} cota(s) — ${formatCurrencyBr(user.refundAmount)} (${statusLabel})`,
+        'Os dados de pagamento PIX permanecem preservados e o cancelamento será gravado na auditoria.',
+      ],
+      confirmLabel: 'Confirmar cancelamento do estorno',
+      variant: 'warning',
+      onConfirm: async () => {
+        setBusyId(user.uid);
+        try {
+          await dataService.cancelRefund(user.uid, actorEmail);
+          await refreshAll();
+          showToast('info', `Estorno de ${user.displayName} cancelado.`);
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
+  }
+
+  function handleToggleModerator(user: UserProfile) {
+    const runToggle = async () => {
+      setBusyId(user.uid);
+      try {
+        await dataService.toggleModeratorRole(
+          user.uid,
+          !user.isModerator,
+          actorEmail
+        );
+        await refreshAll();
+        showToast(
+          'info',
+          `${user.displayName} ${!user.isModerator ? 'agora é moderador(a)' : 'não é mais moderador(a)'}.`
+        );
+      } finally {
+        setBusyId(null);
+      }
+    };
+
+    if (user.isModerator) {
+      setPendingConfirm({
+        title: `Remover moderador ${user.displayName}?`,
+        description:
+          'Esta pessoa perderá acesso ao painel /admin e às ações de moderação imediatamente.',
+        details: [
+          `Moderador(a): ${user.displayName} (${user.email})`,
+          'Lembre-se de trocar também o MEGACORN_SECRET no Apps Script se necessário.',
+        ],
+        confirmLabel: 'Remover moderador',
+        variant: 'danger',
+        onConfirm: runToggle,
+      });
+    } else {
+      void runToggle();
     }
   }
 
@@ -537,9 +672,46 @@ export function AdminPage() {
       );
       return;
     }
+    if (nums.length === 0 && drawResult.numbers.length > 0) {
+      setPendingConfirm({
+        title: 'Limpar dezenas sorteadas oficiais?',
+        description:
+          'O resultado oficial publicado será removido da aba Jogos & Chances até que novas dezenas sejam salvas.',
+        details: [
+          `Dezenas atuais: ${drawResult.numbers.map((n) => String(n).padStart(2, '0')).join(' - ')}`,
+        ],
+        confirmLabel: 'Limpar resultado',
+        variant: 'danger',
+        onConfirm: async () => {
+          await dataService.saveDrawResult([], actorEmail);
+          await refreshAll();
+          showToast('info', 'Dezenas sorteadas limpas.');
+        },
+      });
+      return;
+    }
     await dataService.saveDrawResult(nums, actorEmail);
     await refreshAll();
     showToast('success', 'Resultado oficial salvo!');
+  }
+
+  function handleDeleteGame(game: LotteryGame) {
+    const formatted = game.numbers
+      .map((n) => String(n).padStart(2, '0'))
+      .join(' - ');
+    setPendingConfirm({
+      title: `Excluir volante "${game.label}"?`,
+      description:
+        'Este volante será removido permanentemente da lista oficial de jogos e do cálculo de probabilidades.',
+      details: [`Volante: ${game.label}`, `Dezenas: ${formatted}`],
+      confirmLabel: 'Excluir volante',
+      variant: 'danger',
+      onConfirm: async () => {
+        await dataService.deleteGame(game.id, actorEmail);
+        await refreshAll();
+        showToast('info', `Volante "${game.label}" removido.`);
+      },
+    });
   }
 
   async function handleSaveAllSettings(e: React.FormEvent) {
@@ -579,10 +751,54 @@ export function AdminPage() {
     }
   }
 
-  async function handlePurgeCpfs() {
-    const count = await dataService.purgeAllCpfs(actorEmail);
-    await refreshAll();
-    showToast('info', `Limpeza LGPD concluída: ${count} CPF(s) removidos.`);
+  function handlePurgeCpfs() {
+    setPendingConfirm({
+      title: 'Apagar permanentemente todos os CPFs (LGPD)?',
+      description: `Todos os ${cpfStoredCount} CPF(s) armazenados serão apagados de forma irreversível da base de participantes.`,
+      details: [
+        'Recomendado apenas após emitir os bilhetes na lotérica.',
+        'Nomes, cotas, pagamentos e histórico de auditoria permanecem intactos.',
+      ],
+      confirmLabel: `Apagar ${cpfStoredCount} CPF(s)`,
+      variant: 'danger',
+      onConfirm: async () => {
+        const count = await dataService.purgeAllCpfs(actorEmail);
+        await refreshAll();
+        showToast('info', `Limpeza LGPD concluída: ${count} CPF(s) removidos.`);
+      },
+    });
+  }
+
+  function handleResetDatabase() {
+    const adminCount = allUsers.filter((u) => u.isModerator).length;
+    const nonAdminCount = allUsers.length - adminCount;
+    setPendingConfirm({
+      title: 'Restaurar base de dados mantendo os admins?',
+      description:
+        'Esta ação apaga participantes de teste, volantes, resultado do sorteio e registros de PIX/estorno, mantendo sua conta de moderador e todas as configurações prontas.',
+      details: [
+        `Será APAGADO: ${nonAdminCount} participante(s) não-admin, ${games.length} volante(s), resultado do sorteio e status de PIX/estorno/bilhete.`,
+        `Será PRESERVADO: ${adminCount} moderador(es) (acesso /admin garantido, com cota zerada/limpa), chave PIX, código de convite, datas, Apps Script e log de auditoria.`,
+        'A timeline volta para "Fase de cadastro" com inscrições e PIX abertos.',
+      ],
+      confirmLabel: 'Restaurar base mantendo admins',
+      variant: 'danger',
+      requireTypedText: 'RESTAURAR',
+      onConfirm: async () => {
+        setBusyId('reset_db');
+        try {
+          const res =
+            await dataService.resetPoolDatabaseKeepingAdmins(actorEmail);
+          await refreshAll();
+          showToast(
+            'success',
+            `Base restaurada! ${res.removedParticipants} participante(s) e ${res.removedGames} volante(s) removidos; ${res.preservedAdmins} admin(s) e configurações preservados.`
+          );
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
   const pendingApprovals = allUsers.filter((u) => u.approvalStatus === 'pending').length;
@@ -605,11 +821,20 @@ export function AdminPage() {
             <button
               type="button"
               className="btn btn-secondary btn-sm"
-              onClick={async () => {
-                await dataService.demoResetData?.();
-                await refreshAll();
-                showToast('info', 'Dados de demonstração restaurados.');
-              }}
+              onClick={() =>
+                setPendingConfirm({
+                  title: 'Resetar dados do Modo Demo?',
+                  description:
+                    'Todas as alterações feitas localmente no modo demonstração serão descartadas e substituídas pelos dados de exemplo.',
+                  confirmLabel: 'Resetar Demo',
+                  variant: 'warning',
+                  onConfirm: async () => {
+                    await dataService.demoResetData?.();
+                    await refreshAll();
+                    showToast('info', 'Dados de demonstração restaurados.');
+                  },
+                })
+              }
             >
               <RefreshCw size={14} aria-hidden="true" />
               Resetar Demo
@@ -1122,32 +1347,47 @@ export function AdminPage() {
                                 className="btn btn-secondary btn-sm"
                                 style={{ padding: '5px 8px' }}
                                 disabled={busyId === u.uid}
-                                onClick={async () => {
+                                onClick={() => {
                                   const val =
                                     ticketDrafts[u.uid] !== undefined
                                       ? ticketDrafts[u.uid]
                                       : u.assignedTicketNumbers || '';
-                                  setBusyId(u.uid);
-                                  try {
-                                    await dataService.updateParticipantTicketInfo(
-                                      u.uid,
-                                      { assignedTicketNumbers: val },
-                                      actorEmail
-                                    );
-                                    await refreshAll();
-                                    showToast(
-                                      'success',
-                                      `Nº da cota do bilhete salvo para ${u.displayName}.`
-                                    );
-                                  } catch (err) {
-                                    showToast(
-                                      'danger',
-                                      err instanceof Error
-                                        ? err.message
-                                        : 'Erro ao salvar nº do bilhete.'
-                                    );
-                                  } finally {
-                                    setBusyId(null);
+                                  const saveTicket = async () => {
+                                    setBusyId(u.uid);
+                                    try {
+                                      await dataService.updateParticipantTicketInfo(
+                                        u.uid,
+                                        { assignedTicketNumbers: val },
+                                        actorEmail
+                                      );
+                                      await refreshAll();
+                                      showToast(
+                                        'success',
+                                        val.trim()
+                                          ? `Nº da cota do bilhete salvo para ${u.displayName}.`
+                                          : `Nº da cota do bilhete removido para ${u.displayName}.`
+                                      );
+                                    } catch (err) {
+                                      showToast(
+                                        'danger',
+                                        err instanceof Error
+                                          ? err.message
+                                          : 'Erro ao salvar nº do bilhete.'
+                                      );
+                                    } finally {
+                                      setBusyId(null);
+                                    }
+                                  };
+                                  if (!val.trim() && u.assignedTicketNumbers) {
+                                    setPendingConfirm({
+                                      title: `Remover nº do bilhete de ${u.displayName}?`,
+                                      description: `O número salvo (${u.assignedTicketNumbers}) será apagado da ficha do participante e do placar.`,
+                                      confirmLabel: 'Remover nº do bilhete',
+                                      variant: 'danger',
+                                      onConfirm: saveTicket,
+                                    });
+                                  } else {
+                                    void saveTicket();
                                   }
                                 }}
                                 title="Salvar nº da cota no bilhete"
@@ -1253,6 +1493,20 @@ export function AdminPage() {
                             </button>
                           )}
 
+                          {(u.refundStatus === 'pending' ||
+                            u.refundStatus === 'completed') && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              disabled={busyId === u.uid}
+                              onClick={() => handleCancelRefund(u)}
+                              aria-label={`Cancelar estorno de ${u.displayName}`}
+                            >
+                              <XCircle size={13} aria-hidden="true" />
+                              Cancelar Estorno
+                            </button>
+                          )}
+
                           {u.approvalStatus === 'approved' &&
                             u.uid !== profile.uid && (
                               <button
@@ -1289,18 +1543,8 @@ export function AdminPage() {
                               <button
                                 type="button"
                                 className="btn btn-ghost btn-sm"
-                                onClick={async () => {
-                                  await dataService.toggleModeratorRole(
-                                    u.uid,
-                                    !u.isModerator,
-                                    actorEmail
-                                  );
-                                  await refreshAll();
-                                  showToast(
-                                    'info',
-                                    `${u.displayName} ${!u.isModerator ? 'agora é moderador(a)' : 'não é mais moderador(a)'}.`
-                                  );
-                                }}
+                                disabled={busyId === u.uid}
+                                onClick={() => handleToggleModerator(u)}
                                 aria-label={
                                   u.isModerator
                                     ? `Remover permissão de moderador de ${u.displayName}`
@@ -1605,6 +1849,35 @@ export function AdminPage() {
             </div>
           </section>
           </div>
+
+          <section className="card danger-zone stack-sm">
+            <div className="row" style={{ gap: 10 }}>
+              <AlertTriangle size={20} color="var(--danger-ink)" aria-hidden="true" />
+              <div>
+                <h2>Restaurar Base de Dados (Mantendo Admins)</h2>
+                <p style={{ color: 'var(--ink-secondary)', fontSize: '0.88rem' }}>
+                  Útil após testes pré-lançamento ou ao iniciar uma nova edição:
+                  apaga participantes não-admin, volantes, resultado do sorteio e
+                  registros de PIX/estorno, mantendo os moderadores ativos e
+                  todas as configurações (chave PIX, convite, Apps Script e datas).
+                </p>
+              </div>
+            </div>
+            <div>
+              <button
+                type="button"
+                className="btn btn-danger"
+                disabled={busyId === 'reset_db'}
+                onClick={handleResetDatabase}
+                id="btn-reset-database-keep-admins"
+              >
+                <Trash2 size={15} aria-hidden="true" />
+                {busyId === 'reset_db'
+                  ? 'Restaurando base...'
+                  : 'Restaurar base de dados (sem perder admin)'}
+              </button>
+            </div>
+          </section>
         </div>
       )}
 
@@ -1742,11 +2015,7 @@ export function AdminPage() {
                       type="button"
                       className="btn btn-danger btn-sm"
                       aria-label={`Excluir volante ${g.label}`}
-                      onClick={async () => {
-                        await dataService.deleteGame(g.id, actorEmail);
-                        await refreshAll();
-                        showToast('info', 'Volante removido.');
-                      }}
+                      onClick={() => handleDeleteGame(g)}
                     >
                       <Trash2 size={13} aria-hidden="true" />
                     </button>
@@ -2192,6 +2461,21 @@ export function AdminPage() {
           )}
         </section>
       )}
+
+      <ConfirmDialog
+        open={Boolean(pendingConfirm)}
+        title={pendingConfirm?.title || ''}
+        description={pendingConfirm?.description || ''}
+        details={pendingConfirm?.details}
+        confirmLabel={pendingConfirm?.confirmLabel || 'Confirmar'}
+        variant={pendingConfirm?.variant || 'danger'}
+        requireTypedText={pendingConfirm?.requireTypedText}
+        busy={confirmBusy}
+        onConfirm={executeConfirm}
+        onCancel={() => {
+          if (!confirmBusy) setPendingConfirm(null);
+        }}
+      />
     </div>
   );
 }
