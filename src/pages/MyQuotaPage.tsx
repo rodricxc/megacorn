@@ -93,10 +93,20 @@ export function MyQuotaPage() {
 
   // Fluxo 1: Usuário autenticado ainda sem cadastro no bolão -> Código de convite
   if (!profile) {
+    const registrationsOpen = publicConfig.flags.registrationsOpen;
+
     async function handleRegister(e: React.FormEvent) {
       e.preventDefault();
       if (!authUser) return;
       setFeedback(null);
+
+      if (!registrationsOpen) {
+        setFeedback({
+          type: 'danger',
+          text: 'Novas inscrições (submissões) estão desativadas no momento.',
+        });
+        return;
+      }
 
       if (!displayName.trim()) {
         setFeedback({ type: 'danger', text: 'Informe seu nome de exibição.' });
@@ -127,6 +137,7 @@ export function MyQuotaPage() {
           text: 'Cadastro enviado! Você já pode ver seu PIX e acompanhar sua aprovação.',
         });
       } catch (err) {
+        await refreshAll();
         setFeedback({
           type: 'danger',
           text:
@@ -144,7 +155,7 @@ export function MyQuotaPage() {
         <div className="card stack-md" id="onboarding-registration-card">
           <div>
             <span className="badge badge-unicorn">
-              <KeyRound size={13} />
+              <KeyRound size={13} aria-hidden="true" />
               Primeiro acesso • {authUser?.email}
             </span>
             <h1 style={{ marginTop: 8 }}>Complete sua entrada no {publicConfig.poolName}</h1>
@@ -154,111 +165,128 @@ export function MyQuotaPage() {
             </p>
           </div>
 
-          {!publicConfig.flags.registrationsOpen ? (
-            <div className="alert alert-warning">
-              <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+          {!registrationsOpen && (
+            <div
+              className="alert alert-warning"
+              role="status"
+              aria-live="polite"
+              id="registration-closed-alert"
+            >
+              <AlertTriangle size={18} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
               <div>
-                <strong>Novas inscrições estão desabilitadas no momento.</strong>
+                <strong>Novas inscrições estão fechadas no momento.</strong>
                 <p style={{ marginTop: 4 }}>
-                  Os administradores pausaram o recebimento de novos cadastros.
-                  Fale com a organização do bolão se precisar de ajuda.
+                  Os administradores desativaram novas inscrições (submissões),
+                  então o envio do cadastro está bloqueado. Fale com a
+                  organização do bolão se precisar de ajuda.
                 </p>
               </div>
             </div>
-          ) : (
-            <form onSubmit={handleRegister} className="stack-md">
-              <div className="field">
-                <label htmlFor="invite-code-input">Código de convite do time</label>
-                <input
-                  id="invite-code-input"
-                  type="text"
-                  required
-                  className="input mono"
-                  placeholder="Ex.: MEGACORN2027"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                />
-              </div>
-
-              <div className="field">
-                <label htmlFor="reg-display-name">
-                  Seu nome de exibição (como aparecerá no placar após aprovação)
-                </label>
-                <input
-                  id="reg-display-name"
-                  type="text"
-                  required
-                  className="input"
-                  placeholder="Ex.: Ana Paula S."
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  maxLength={60}
-                />
-              </div>
-
-              <div className="field">
-                <span id="reg-quotas-label" style={{ fontSize: '0.85rem', fontWeight: 700 }}>
-                  Quantas cotas deseja reservar? ({formatCurrencyBr(publicConfig.quotaPrice)} cada)
-                </span>
-                <div
-                  className="quota-pills"
-                  role="radiogroup"
-                  aria-labelledby="reg-quotas-label"
-                  onKeyDown={(e) => handleQuotaRadioKeyDown(e, 'reg-quota-pill')}
-                >
-                  {quotaOptions.map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      role="radio"
-                      aria-checked={requestedQuotas === n}
-                      aria-label={`${n} cota${n > 1 ? 's' : ''}, total ${formatCurrencyBr(n * publicConfig.quotaPrice)}`}
-                      tabIndex={requestedQuotas === n ? 0 : -1}
-                      className={`quota-pill${requestedQuotas === n ? ' selected' : ''}`}
-                      onClick={() => setRequestedQuotas(n)}
-                      id={`reg-quota-pill-${n}`}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-                <span className="field-hint">
-                  Total previsto:{' '}
-                  <strong>
-                    {formatCurrencyBr(requestedQuotas * publicConfig.quotaPrice)}
-                  </strong>{' '}
-                  • Lembre-se: a 1ª cota tem prioridade máxima pela regra de
-                  equidade.
-                </span>
-              </div>
-
-              <CpfField
-                value={cpf}
-                onChange={setCpf}
-                id="reg-cpf-input"
-              />
-
-              {feedback && (
-                <div
-                  className={`alert alert-${feedback.type}`}
-                  role={feedback.type === 'danger' ? 'alert' : 'status'}
-                  aria-live={feedback.type === 'danger' ? 'assertive' : 'polite'}
-                >
-                  {feedback.text}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={saving}
-                id="btn-submit-registration"
-              >
-                <Sparkles size={16} aria-hidden="true" />
-                {saving ? 'Validando convite...' : 'Confirmar minha reserva'}
-              </button>
-            </form>
           )}
+
+          <form onSubmit={handleRegister} className="stack-md">
+            <div className="field">
+              <label htmlFor="invite-code-input">Código de convite do time</label>
+              <input
+                id="invite-code-input"
+                type="text"
+                required
+                disabled={!registrationsOpen || saving}
+                className="input mono"
+                placeholder="Ex.: MEGACORN2027"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="reg-display-name">
+                Seu nome de exibição (como aparecerá no placar após aprovação)
+              </label>
+              <input
+                id="reg-display-name"
+                type="text"
+                required
+                disabled={!registrationsOpen || saving}
+                className="input"
+                placeholder="Ex.: Ana Paula S."
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                maxLength={60}
+              />
+            </div>
+
+            <div className="field">
+              <span id="reg-quotas-label" style={{ fontSize: '0.85rem', fontWeight: 700 }}>
+                Quantas cotas deseja reservar? ({formatCurrencyBr(publicConfig.quotaPrice)} cada)
+              </span>
+              <div
+                className="quota-pills"
+                role="radiogroup"
+                aria-labelledby="reg-quotas-label"
+                onKeyDown={(e) => {
+                  if (!registrationsOpen || saving) return;
+                  handleQuotaRadioKeyDown(e, 'reg-quota-pill');
+                }}
+              >
+                {quotaOptions.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    role="radio"
+                    disabled={!registrationsOpen || saving}
+                    aria-checked={requestedQuotas === n}
+                    aria-label={`${n} cota${n > 1 ? 's' : ''}, total ${formatCurrencyBr(n * publicConfig.quotaPrice)}`}
+                    tabIndex={requestedQuotas === n ? 0 : -1}
+                    className={`quota-pill${requestedQuotas === n ? ' selected' : ''}`}
+                    onClick={() => setRequestedQuotas(n)}
+                    id={`reg-quota-pill-${n}`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <span className="field-hint">
+                Total previsto:{' '}
+                <strong>
+                  {formatCurrencyBr(requestedQuotas * publicConfig.quotaPrice)}
+                </strong>{' '}
+                • Lembre-se: a 1ª cota tem prioridade máxima pela regra de
+                equidade.
+              </span>
+            </div>
+
+            <CpfField
+              value={cpf}
+              onChange={setCpf}
+              id="reg-cpf-input"
+              disabled={!registrationsOpen || saving}
+            />
+
+            {feedback && (
+              <div
+                className={`alert alert-${feedback.type}`}
+                role={feedback.type === 'danger' ? 'alert' : 'status'}
+                aria-live={feedback.type === 'danger' ? 'assertive' : 'polite'}
+              >
+                {feedback.text}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={saving || !registrationsOpen}
+              id="btn-submit-registration"
+            >
+              <Sparkles size={16} aria-hidden="true" />
+              {!registrationsOpen
+                ? 'Inscrições fechadas'
+                : saving
+                  ? 'Validando convite...'
+                  : 'Confirmar minha reserva'}
+            </button>
+          </form>
         </div>
       </div>
     );

@@ -164,4 +164,24 @@ describe('Admin refund cancellation and database reset keeping admins', () => {
     expect(csv).toContain('Aviso de PIX enviado');
     expect(csv).toContain('teste.audit@time.com');
   });
+
+  it('blocks new participant registration when registrationsOpen is disabled', async () => {
+    const svc = createDemoDataService();
+    const pub = await svc.getPublicConfig();
+    await svc.updatePublicConfig(
+      { ...pub, flags: { ...pub.flags, registrationsOpen: false } },
+      'organizador@megacorn.demo'
+    );
+
+    await expect(
+      svc.registerParticipant({
+        uid: 'usr_blocked_reg',
+        email: 'novo@time.com',
+        displayName: 'Novo Participante',
+        cpf: '',
+        requestedQuotas: 1,
+        inviteCode: 'MEGACORN2027',
+      })
+    ).rejects.toThrow(/desabilitadas/i);
+  });
 });

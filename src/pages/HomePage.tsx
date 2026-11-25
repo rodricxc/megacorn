@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   ArrowRight,
   BookOpen,
   CheckCircle2,
@@ -30,15 +31,25 @@ export function HomePage() {
   const urlInviteCode = extractInviteCodeFromUrl();
   const [email, setEmail] = useState(getSessionCookieHint() || '');
   const [inviteCode, setInviteCode] = useState(getRememberedInviteCode());
+  const [confirmedExistingAccount, setConfirmedExistingAccount] = useState(false);
   const [sending, setSending] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const registrationsOpen = publicConfig.flags.registrationsOpen;
 
   async function handleSendMagicLink(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     const cleanEmail = email.trim().toLowerCase();
     const cleanCode = inviteCode.trim().toUpperCase();
+
+    if (!registrationsOpen && !confirmedExistingAccount) {
+      setError(
+        'Novas inscrições estão fechadas. Confirme abaixo que você já possui cadastro para acessar sua conta.'
+      );
+      return;
+    }
 
     if (!cleanCode) {
       setError('Informe o código de convite do time para solicitar acesso.');
@@ -191,6 +202,25 @@ export function HomePage() {
               </p>
             </div>
 
+            {!registrationsOpen && !sentTo && (
+              <div
+                className="alert alert-warning"
+                role="status"
+                aria-live="polite"
+                id="home-registrations-closed-alert"
+              >
+                <AlertTriangle size={18} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <strong>Novas inscrições estão fechadas no momento.</strong>
+                  <p style={{ marginTop: 4 }}>
+                    Novos cadastros estão bloqueados pelos administradores. Se
+                    você <strong>já possui cadastro</strong> (ou é organizador),
+                    marque a opção abaixo para acessar sua conta existente.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {urlInviteCode && !sentTo && (
               <div className="alert alert-success" role="status" aria-live="polite">
                 <KeyRound size={17} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
@@ -279,6 +309,39 @@ export function HomePage() {
                   />
                 </div>
 
+                {!registrationsOpen && (
+                  <label
+                    htmlFor="confirm-existing-account-checkbox"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 8,
+                      fontSize: '0.86rem',
+                      fontWeight: 600,
+                      color: 'var(--ink-primary)',
+                      background: 'var(--bg-subtle)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '10px 12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <input
+                      id="confirm-existing-account-checkbox"
+                      type="checkbox"
+                      checked={confirmedExistingAccount}
+                      onChange={(e) =>
+                        setConfirmedExistingAccount(e.target.checked)
+                      }
+                      style={{ marginTop: 2 }}
+                    />
+                    <span>
+                      Já tenho cadastro neste bolão (ou sou organizador) — quero
+                      apenas entrar na minha conta
+                    </span>
+                  </label>
+                )}
+
                 {error && (
                   <div className="alert alert-danger" role="alert">
                     {error}
@@ -288,13 +351,17 @@ export function HomePage() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={sending}
+                  disabled={
+                    sending || (!registrationsOpen && !confirmedExistingAccount)
+                  }
                   id="btn-send-magic-link"
                 >
                   <Mail size={16} aria-hidden="true" />
                   {sending
                     ? 'Validando e enviando...'
-                    : 'Validar convite e receber link no e-mail'}
+                    : !registrationsOpen
+                      ? 'Entrar em conta já cadastrada'
+                      : 'Validar convite e receber link no e-mail'}
                 </button>
               </form>
             )}

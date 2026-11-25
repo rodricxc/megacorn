@@ -7,6 +7,7 @@ interface CpfFieldProps {
   onChange: (digits: string) => void;
   id?: string;
   label?: string;
+  disabled?: boolean;
 }
 
 export function CpfField({
@@ -14,6 +15,7 @@ export function CpfField({
   onChange,
   id = 'cpf-input',
   label = 'CPF (opcional — caso queira seu CPF no bilhete)',
+  disabled = false,
 }: CpfFieldProps) {
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -47,6 +49,7 @@ export function CpfField({
           className="input mono"
           style={{ flex: 1 }}
           placeholder="000.000.000-00 (opcional)"
+          disabled={disabled}
           value={
             revealed || digits.length < 11
               ? formatCpf(digits)
@@ -63,6 +66,7 @@ export function CpfField({
             <button
               type="button"
               className="btn btn-secondary btn-sm"
+              disabled={disabled}
               onClick={() => setRevealed((r) => !r)}
               aria-label={revealed ? 'Ocultar CPF' : 'Revelar CPF'}
               aria-pressed={revealed}
@@ -76,6 +80,7 @@ export function CpfField({
             <button
               type="button"
               className="btn btn-secondary btn-sm"
+              disabled={disabled}
               onClick={handleCopy}
               aria-label={copied ? 'CPF copiado' : 'Copiar CPF'}
             >

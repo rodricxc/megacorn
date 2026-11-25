@@ -38,7 +38,11 @@ export function RulesPage() {
             className="btn btn-primary"
             id="rules-cta-participate"
           >
-            {authUser ? 'Ir para Minha Cota' : 'Participar agora'}
+            {authUser
+              ? 'Ir para Minha Cota'
+              : publicConfig.flags.registrationsOpen
+                ? 'Participar agora'
+                : 'Acessar minha conta'}
             <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </div>
