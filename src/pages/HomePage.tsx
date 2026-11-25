@@ -162,14 +162,19 @@ export function HomePage() {
         </div>
 
         <div
-          className="stack-xs"
+          className="stack-sm"
           style={{
             borderTop: '1px solid var(--border-subtle)',
-            paddingTop: 18,
+            paddingTop: 20,
           }}
         >
-          <div className="stat-label">Cronograma do {publicConfig.poolName}</div>
-          <Timeline config={publicConfig} compact />
+          <div>
+            <h2>Cronograma do {publicConfig.poolName}</h2>
+            <p style={{ color: 'var(--ink-secondary)', fontSize: '0.9rem', marginTop: 2 }}>
+              Acompanhe em que fase o bolão está e o que acontece em cada etapa.
+            </p>
+          </div>
+          <Timeline config={publicConfig} />
         </div>
       </section>
 
