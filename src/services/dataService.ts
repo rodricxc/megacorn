@@ -160,7 +160,7 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   merchantName: 'Organizacao MegaCorn',
   merchantCity: 'SAO PAULO',
   instructions:
-    'Faça o PIX usando o QR Code ou Copia e Cola abaixo (valor exato e identificador txid já preenchidos). Depois, clique em "Já fiz o PIX".',
+    'Faça o PIX usando o QR Code ou Copia e Cola abaixo (valor exato já preenchido). Depois, clique em "Já fiz o PIX".',
 };
 
 export const DEFAULT_ADMIN_CONFIG: AdminConfig = {

@@ -320,8 +320,7 @@ export function MyQuotaPage() {
           <div>
             <h1>Olá, {profile.displayName}!</h1>
             <p style={{ color: 'var(--ink-secondary)', fontSize: '0.92rem' }}>
-              Conectado como <strong>{profile.email}</strong> • TXID{' '}
-              <span className="mono">{profile.txid}</span>
+              Conectado como <strong>{profile.email}</strong>
             </p>
           </div>
           <div className="row" style={{ gap: 8 }}>
