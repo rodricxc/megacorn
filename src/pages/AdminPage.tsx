@@ -1,9 +1,12 @@
 import {
   AlertTriangle,
+  BarChart3,
+  Calendar,
   Check,
   CheckCircle2,
   ClipboardList,
   Clover,
+  Coins,
   Copy,
   Download,
   Eye,
@@ -19,6 +22,7 @@ import {
   Settings,
   ShieldCheck,
   Sliders,
+  Ticket,
   Trash2,
   Undo2,
   Users,
@@ -28,9 +32,11 @@ import { useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useApp } from '../context/useApp';
+import { calculateAdminOverviewMetrics } from '../lib/adminMetrics';
 import {
   buildWhatsappReminderText,
   formatCurrencyBr,
+  formatDateBr,
   sendEmailViaAppsScript,
 } from '../lib/appsScript';
 import { formatCpf, maskCpf } from '../lib/cpf';
@@ -38,6 +44,7 @@ import { exportAuditLogsCsv, exportParticipantsCsv } from '../lib/csv';
 import { calculateEquityAllocation, calculateRefundsOnClose } from '../lib/equity';
 import {
   calculateGameOdds,
+  calculatePoolCombinedOdds,
   formatOneIn,
   parseLotteryNumbers,
 } from '../lib/lottery';
@@ -60,7 +67,13 @@ import type {
   UserProfile,
 } from '../types';
 
-type AdminTab = 'participants' | 'stages' | 'games' | 'settings' | 'audit';
+type AdminTab =
+  | 'overview'
+  | 'participants'
+  | 'stages'
+  | 'games'
+  | 'settings'
+  | 'audit';
 
 interface PendingConfirm {
   title: string;
@@ -89,7 +102,7 @@ export function AdminPage() {
     refreshAll,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<AdminTab>('participants');
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<
     | 'all'
@@ -205,6 +218,22 @@ export function AdminPage() {
       publicConfig.quotaPrice
     );
   }, [allUsers, publicConfig.totalQuotas, publicConfig.quotaPrice]);
+
+  const overview = useMemo(
+    () =>
+      calculateAdminOverviewMetrics({
+        allUsers,
+        publicConfig,
+        liveEquity,
+        closePreview,
+      }),
+    [allUsers, publicConfig, liveEquity, closePreview]
+  );
+
+  const combinedOdds = useMemo(
+    () => calculatePoolCombinedOdds(games.map((g) => g.numbers)),
+    [games]
+  );
 
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -892,6 +921,7 @@ export function AdminPage() {
           aria-label="Seções do painel administrativo"
           onKeyDown={(e) => {
             const tabs: AdminTab[] = [
+              'overview',
               'participants',
               'stages',
               'games',
@@ -913,6 +943,19 @@ export function AdminPage() {
             }
           }}
         >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'overview'}
+            aria-controls="admin-panel-overview"
+            tabIndex={activeTab === 'overview' ? 0 : -1}
+            className={`tab-btn${activeTab === 'overview' ? ' active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+            id="admin-tab-overview"
+          >
+            <BarChart3 size={15} aria-hidden="true" />
+            Resumo &amp; Andamento
+          </button>
           <button
             type="button"
             role="tab"
@@ -990,6 +1033,486 @@ export function AdminPage() {
           </div>
         )}
       </section>
+
+      {/* ABA 0: RESUMO & ANDAMENTO */}
+      {activeTab === 'overview' && (
+        <section
+          className="stack-lg"
+          role="tabpanel"
+          id="admin-panel-overview"
+          aria-labelledby="admin-tab-overview"
+        >
+          {/* Panorama Financeiro */}
+          <div className="card stack-md">
+            <div className="row-between">
+              <div className="row" style={{ gap: 8 }}>
+                <Coins size={20} color="var(--luck-500)" aria-hidden="true" />
+                <div>
+                  <h2>Resumo Financeiro &amp; Andamento do Bolão</h2>
+                  <p style={{ color: 'var(--ink-secondary)', fontSize: '0.9rem' }}>
+                    Visão consolidada do caixa, cotas reservadas, valores confirmados e pendências operacionais.
+                  </p>
+                </div>
+              </div>
+              <span className="badge badge-unicorn">
+                Fase: {getPhaseMeta(publicConfig.currentPhase).label}
+              </span>
+            </div>
+
+            <div className="grid-4">
+              <div className="card-mint stack-xs">
+                <div className="stat-label">Total já arrecadado (PIX bruto)</div>
+                <div className="stat-value">
+                  {formatCurrencyBr(overview.grossCollectedAmount)}
+                </div>
+                <div className="stat-sub">
+                  {overview.grossPaidQuotas} cota(s) paga(s) por{' '}
+                  {overview.confirmedUsersCount} pessoa(s)
+                  {overview.pendingApprovalPaidAmount > 0 && (
+                    <>
+                      {' '}• inclui{' '}
+                      <strong>
+                        {formatCurrencyBr(overview.pendingApprovalPaidAmount)}
+                      </strong>{' '}
+                      de pendentes
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="card-gold stack-xs">
+                <div className="stat-label">
+                  {publicConfig.flags.poolClosed
+                    ? 'Total confirmado final (apostas)'
+                    : 'Total confirmado líquido (caixa)'}
+                </div>
+                <div className="stat-value">
+                  {formatCurrencyBr(overview.netConfirmedAmount)}
+                </div>
+                <div className="stat-sub">
+                  {overview.confirmedEffectiveQuotas}/{overview.totalQuotas} cota(s)
+                  efetiva(s) ({overview.confirmedPercent}% da meta)
+                </div>
+              </div>
+
+              <div className="stat-tile stack-xs">
+                <div className="stat-label">Total esperado (bolão cheio)</div>
+                <div className="stat-value">
+                  {formatCurrencyBr(overview.expectedMaxAmount)}
+                </div>
+                <div className="stat-sub">
+                  {overview.totalQuotas} cotas ×{' '}
+                  {formatCurrencyBr(overview.quotaPrice)} • Reservas aprovadas hoje:{' '}
+                  <strong>
+                    {formatCurrencyBr(overview.expectedFromApprovedAmount)}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="card-unicorn stack-xs">
+                <div className="stat-label">A receber / em conferência</div>
+                <div className="stat-value">
+                  {formatCurrencyBr(
+                    overview.reportedPixAmount + overview.unpaidActiveAmount
+                  )}
+                </div>
+                <div className="stat-sub">
+                  Avisaram PIX:{' '}
+                  <strong>{formatCurrencyBr(overview.reportedPixAmount)}</strong> (
+                  {overview.reportedPixQuotas}c) • Sem PIX:{' '}
+                  <strong>{formatCurrencyBr(overview.unpaidActiveAmount)}</strong> (
+                  {overview.unpaidActiveQuotas}c)
+                </div>
+              </div>
+            </div>
+
+            {/* Barras de progresso */}
+            <div className="grid-2">
+              <div className="card-cream stack-xs">
+                <div
+                  className="row-between"
+                  style={{ fontSize: '0.84rem', fontWeight: 700 }}
+                >
+                  <span id="admin-overview-reserved-label">
+                    Reservas aprovadas ({overview.reservedApprovedQuotas}/
+                    {overview.totalQuotas} cotas)
+                  </span>
+                  <span>{overview.reservedPercent}%</span>
+                </div>
+                <div
+                  className="progress-track"
+                  role="progressbar"
+                  aria-labelledby="admin-overview-reserved-label"
+                  aria-valuenow={overview.reservedPercent}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${overview.reservedPercent}%` }}
+                  />
+                </div>
+                <span className="field-hint">
+                  {overview.remainingToReserveQuotas > 0
+                    ? `Faltam ${overview.remainingToReserveQuotas} cota(s) (${formatCurrencyBr(overview.remainingToReserveQuotas * overview.quotaPrice)}) para completar as ${overview.totalQuotas} reservas.`
+                    : `Todas as ${overview.totalQuotas} cotas já estão cobertas por reservas aprovadas!`}
+                </span>
+              </div>
+
+              <div className="card-cream stack-xs">
+                <div
+                  className="row-between"
+                  style={{ fontSize: '0.84rem', fontWeight: 700 }}
+                >
+                  <span id="admin-overview-confirmed-label">
+                    Arrecadação confirmada ({overview.confirmedEffectiveQuotas}/
+                    {overview.totalQuotas} cotas)
+                  </span>
+                  <span>{overview.confirmedPercent}%</span>
+                </div>
+                <div
+                  className="progress-track"
+                  role="progressbar"
+                  aria-labelledby="admin-overview-confirmed-label"
+                  aria-valuenow={overview.confirmedPercent}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${overview.confirmedPercent}%` }}
+                  />
+                </div>
+                <span className="field-hint">
+                  {overview.remainingToConfirmQuotas > 0
+                    ? `Faltam ${overview.remainingToConfirmQuotas} cota(s) confirmada(s) (${formatCurrencyBr(overview.remainingToConfirmQuotas * overview.quotaPrice)}) para fechar 100% do caixa.`
+                    : 'Meta de 100% do caixa confirmada via PIX!'}
+                </span>
+              </div>
+            </div>
+
+            {/* Métricas de Cotas */}
+            <div className="grid-4">
+              <div className="stat-tile">
+                <div className="stat-label">Cotas restantes (p/ reservar)</div>
+                <div className="stat-value">
+                  {overview.remainingToReserveQuotas}
+                </div>
+                <div className="stat-sub">
+                  Vagas ainda livres no teto de {overview.totalQuotas}
+                </div>
+              </div>
+
+              <div className="stat-tile">
+                <div className="stat-label">Cotas restantes (p/ pagar)</div>
+                <div className="stat-value">
+                  {overview.remainingToConfirmQuotas}
+                </div>
+                <div className="stat-sub">
+                  Até completar {formatCurrencyBr(overview.expectedMaxAmount)} no caixa
+                </div>
+              </div>
+
+              <div className="stat-tile">
+                <div className="stat-label">Demanda total pedida</div>
+                <div className="stat-value">
+                  {overview.totalRequestedApprovedQuotas}
+                </div>
+                <div className="stat-sub">
+                  Média de{' '}
+                  {overview.avgQuotasPerApproved.toLocaleString('pt-BR')}{' '}
+                  cota(s)/aprovado
+                  {overview.totalRequestedPendingQuotas > 0 &&
+                    ` (+${overview.totalRequestedPendingQuotas} em pendentes)`}
+                </div>
+              </div>
+
+              <div className="stat-tile">
+                <div className="stat-label">Excedentes &amp; Fila de espera</div>
+                <div className="stat-value">{overview.excessRequestedQuotas}</div>
+                <div className="stat-sub">
+                  {overview.waitlistCount > 0
+                    ? `${overview.waitlistCount} pessoa(s) na fila de espera`
+                    : 'Ninguém na fila de espera'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Funil Operacional + Distribuição, Jogos e Cronograma */}
+          <div className="grid-2">
+            <div className="card stack-md">
+              <div className="row-between">
+                <div className="row" style={{ gap: 8 }}>
+                  <Users size={19} color="var(--unicorn-500)" aria-hidden="true" />
+                  <h3>Andamento Operacional &amp; Pendências</h3>
+                </div>
+                <span className="badge badge-neutral">
+                  {overview.approvedUsersCount} aprovados / {overview.totalUsersCount}{' '}
+                  cadastros
+                </span>
+              </div>
+
+              <div className="stack-xs" style={{ fontSize: '0.9rem' }}>
+                <div className="toggle-row">
+                  <div>
+                    <strong>Aprovações pendentes</strong>
+                    <div className="field-hint">
+                      {overview.pendingApprovalUsersCount} cadastro(s) aguardando
+                      revisão ({overview.totalRequestedPendingQuotas} cota(s))
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => {
+                      setStatusFilter('pending_approval');
+                      setActiveTab('participants');
+                    }}
+                  >
+                    Ver ({overview.pendingApprovalUsersCount})
+                  </button>
+                </div>
+
+                <div className="toggle-row">
+                  <div>
+                    <strong>Avisos de PIX para conferir</strong>
+                    <div className="field-hint">
+                      {overview.reportedPixUsersCount} participante(s) •{' '}
+                      {formatCurrencyBr(overview.reportedPixAmount)} aguardando
+                      conferência no extrato
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-gold btn-sm"
+                    onClick={() => {
+                      setStatusFilter('reported_pix');
+                      setActiveTab('participants');
+                    }}
+                  >
+                    Conferir ({overview.reportedPixUsersCount})
+                  </button>
+                </div>
+
+                <div className="toggle-row">
+                  <div>
+                    <strong>Ativos ainda sem PIX</strong>
+                    <div className="field-hint">
+                      {overview.unpaidActiveUsersCount} participante(s) •{' '}
+                      {formatCurrencyBr(overview.unpaidActiveAmount)} (
+                      {overview.unpaidActiveQuotas} cota(s))
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => {
+                      setStatusFilter('unpaid');
+                      setActiveTab('participants');
+                    }}
+                  >
+                    Filtrar ({overview.unpaidActiveUsersCount})
+                  </button>
+                </div>
+
+                <div className="toggle-row">
+                  <div>
+                    <strong>Estornos (pendentes / previstos)</strong>
+                    <div className="field-hint">
+                      Pendentes: {overview.refundPendingUsersCount} (
+                      {formatCurrencyBr(overview.refundPendingAmount)}) • Concluídos:{' '}
+                      {overview.refundCompletedUsersCount} (
+                      {formatCurrencyBr(overview.refundCompletedAmount)})
+                      {!publicConfig.flags.poolClosed &&
+                        overview.projectedRefundUsersCount > 0 && (
+                          <>
+                            {' '}• Previstos se fechar hoje:{' '}
+                            <strong>
+                              {overview.projectedRefundUsersCount} (
+                              {formatCurrencyBr(overview.projectedCloseRefundAmount)})
+                            </strong>
+                          </>
+                        )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => {
+                      setStatusFilter('refund_pending');
+                      setActiveTab('participants');
+                    }}
+                  >
+                    Ver ({overview.refundPendingUsersCount})
+                  </button>
+                </div>
+
+                <div className="toggle-row">
+                  <div>
+                    <strong>Bilhetes &amp; Entrega em Mãos</strong>
+                    <div className="field-hint">
+                      {overview.ticketAssignedUsersCount} com nº de cota •{' '}
+                      {overview.receiptDeliveredUsersCount} entregue(s) •{' '}
+                      {overview.receiptPendingUsersCount} pendente(s) de entrega
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => {
+                      setStatusFilter('receipt_pending');
+                      setActiveTab('participants');
+                    }}
+                  >
+                    Pendentes ({overview.receiptPendingUsersCount})
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="stack-md">
+              {/* Distribuição de cotas por participante */}
+              <div className="card stack-sm">
+                <div className="row-between">
+                  <div className="row" style={{ gap: 8 }}>
+                    <Ticket size={18} color="var(--corn-600)" aria-hidden="true" />
+                    <h3>Distribuição de Cotas (Aprovados)</h3>
+                  </div>
+                  <span className="field-hint">
+                    Máx. {publicConfig.maxQuotasPerPerson} por pessoa
+                  </span>
+                </div>
+                <div className="row" style={{ gap: 8 }}>
+                  {overview.quotaDistribution.map((tier) => (
+                    <div
+                      key={tier.quotas}
+                      className="card-cream"
+                      style={{ flex: '1 1 110px', padding: '12px 14px' }}
+                    >
+                      <div className="stat-label">
+                        {tier.quotas} cota{tier.quotas > 1 ? 's' : ''}
+                      </div>
+                      <div className="stat-value" style={{ fontSize: '1.35rem' }}>
+                        {tier.count}
+                      </div>
+                      <div className="stat-sub">
+                        {tier.count === 1 ? 'participante' : 'participantes'} (
+                        {tier.quotas * tier.count}c)
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <span className="field-hint">
+                  Recusados ou cancelados: <strong>{overview.rejectedOrCancelledCount}</strong>{' '}
+                  • CPFs opcionais informados (PII):{' '}
+                  <strong>{overview.cpfStoredUsersCount}</strong>
+                </span>
+              </div>
+
+              {/* Jogos & Probabilidades */}
+              <div className="card stack-sm">
+                <div className="row-between">
+                  <div className="row" style={{ gap: 8 }}>
+                    <Clover size={18} color="var(--luck-500)" aria-hidden="true" />
+                    <h3>Volantes &amp; Probabilidades</h3>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setActiveTab('games')}
+                  >
+                    Gerenciar jogos
+                  </button>
+                </div>
+                <div className="grid-3">
+                  <div className="card-cream" style={{ padding: '10px 12px' }}>
+                    <div className="stat-label">Volantes</div>
+                    <div className="stat-value" style={{ fontSize: '1.3rem' }}>
+                      {games.length}
+                    </div>
+                  </div>
+                  <div className="card-cream" style={{ padding: '10px 12px' }}>
+                    <div className="stat-label">Jogos simples equiv.</div>
+                    <div className="stat-value" style={{ fontSize: '1.3rem' }}>
+                      {combinedOdds.totalEquivalentSimpleBets.toLocaleString('pt-BR')}
+                    </div>
+                  </div>
+                  <div className="card-cream" style={{ padding: '10px 12px' }}>
+                    <div className="stat-label">Chance Sena</div>
+                    <div className="stat-value" style={{ fontSize: '1.08rem' }}>
+                      {games.length > 0 ? formatOneIn(combinedOdds.senaOneIn) : '—'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Prazos e Status das Chaves */}
+              <div className="card stack-sm">
+                <div className="row-between">
+                  <div className="row" style={{ gap: 8 }}>
+                    <Calendar size={18} color="var(--unicorn-500)" aria-hidden="true" />
+                    <h3>Etapas &amp; Prazos</h3>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setActiveTab('stages')}
+                  >
+                    Controlar etapas
+                  </button>
+                </div>
+                <div className="row" style={{ gap: 6 }}>
+                  <span
+                    className={`badge ${publicConfig.flags.registrationsOpen ? 'badge-success' : 'badge-neutral'}`}
+                  >
+                    Inscrições: {publicConfig.flags.registrationsOpen ? 'Abertas' : 'Pausadas'}
+                  </span>
+                  <span
+                    className={`badge ${publicConfig.flags.pixPaymentOpen ? 'badge-success' : 'badge-neutral'}`}
+                  >
+                    PIX: {publicConfig.flags.pixPaymentOpen ? 'Liberado' : 'Pausado'}
+                  </span>
+                  <span
+                    className={`badge ${publicConfig.flags.boardVisible ? 'badge-success' : 'badge-neutral'}`}
+                  >
+                    Placar: {publicConfig.flags.boardVisible ? 'Visível' : 'Oculto'}
+                  </span>
+                  <span
+                    className={`badge ${publicConfig.flags.gamesVisible ? 'badge-success' : 'badge-neutral'}`}
+                  >
+                    Jogos: {publicConfig.flags.gamesVisible ? 'Visíveis' : 'Ocultos'}
+                  </span>
+                  {publicConfig.flags.poolClosed && (
+                    <span className="badge badge-danger">Bolão Fechado</span>
+                  )}
+                </div>
+                <div
+                  className="grid-2"
+                  style={{ fontSize: '0.84rem', gap: 8, color: 'var(--ink-secondary)' }}
+                >
+                  <div>
+                    Inscrições até:{' '}
+                    <strong>{formatDateBr(publicConfig.registrationDeadline)}</strong>
+                  </div>
+                  <div>
+                    PIX até:{' '}
+                    <strong>{formatDateBr(publicConfig.paymentDeadline)}</strong>
+                  </div>
+                  <div>
+                    Aposta em:{' '}
+                    <strong>{formatDateBr(publicConfig.betPlacementDate)}</strong>
+                  </div>
+                  <div>
+                    Sorteio:{' '}
+                    <strong>{formatDateBr(publicConfig.drawDate)}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ABA 1: PARTICIPANTES & PIX */}
       {activeTab === 'participants' && (
