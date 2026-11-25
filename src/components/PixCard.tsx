@@ -180,13 +180,18 @@ export function PixCard({
             </div>
 
             <div className="field">
-              <label htmlFor="pix-copia-cola-box">
+              <span
+                id="pix-copia-cola-label"
+                style={{ fontSize: '0.85rem', fontWeight: 700 }}
+              >
                 PIX Copia e Cola (valor já preenchido)
-              </label>
+              </span>
               <div
                 id="pix-copia-cola-box"
                 className="pix-code-box"
-                aria-label="Código PIX Copia e Cola"
+                role="region"
+                aria-labelledby="pix-copia-cola-label"
+                tabIndex={0}
               >
                 {pixPayload}
               </div>

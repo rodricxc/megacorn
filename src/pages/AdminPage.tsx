@@ -636,12 +636,39 @@ export function AdminPage() {
           </div>
         </div>
 
-        <div className="tabs" role="tablist" aria-label="Seções do painel administrativo">
+        <div
+          className="tabs"
+          role="tablist"
+          aria-label="Seções do painel administrativo"
+          onKeyDown={(e) => {
+            const tabs: AdminTab[] = [
+              'participants',
+              'stages',
+              'games',
+              'settings',
+              'audit',
+            ];
+            const idx = tabs.indexOf(activeTab);
+            let nextIdx: number | null = null;
+            if (e.key === 'ArrowRight') nextIdx = (idx + 1) % tabs.length;
+            else if (e.key === 'ArrowLeft')
+              nextIdx = (idx - 1 + tabs.length) % tabs.length;
+            else if (e.key === 'Home') nextIdx = 0;
+            else if (e.key === 'End') nextIdx = tabs.length - 1;
+            if (nextIdx !== null) {
+              e.preventDefault();
+              const nextTab = tabs[nextIdx];
+              setActiveTab(nextTab);
+              document.getElementById(`admin-tab-${nextTab}`)?.focus();
+            }
+          }}
+        >
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'participants'}
             aria-controls="admin-panel-participants"
+            tabIndex={activeTab === 'participants' ? 0 : -1}
             className={`tab-btn${activeTab === 'participants' ? ' active' : ''}`}
             onClick={() => setActiveTab('participants')}
             id="admin-tab-participants"
@@ -654,6 +681,7 @@ export function AdminPage() {
             role="tab"
             aria-selected={activeTab === 'stages'}
             aria-controls="admin-panel-stages"
+            tabIndex={activeTab === 'stages' ? 0 : -1}
             className={`tab-btn${activeTab === 'stages' ? ' active' : ''}`}
             onClick={() => setActiveTab('stages')}
             id="admin-tab-stages"
@@ -666,6 +694,7 @@ export function AdminPage() {
             role="tab"
             aria-selected={activeTab === 'games'}
             aria-controls="admin-panel-games"
+            tabIndex={activeTab === 'games' ? 0 : -1}
             className={`tab-btn${activeTab === 'games' ? ' active' : ''}`}
             onClick={() => setActiveTab('games')}
             id="admin-tab-games"
@@ -678,6 +707,7 @@ export function AdminPage() {
             role="tab"
             aria-selected={activeTab === 'settings'}
             aria-controls="admin-panel-settings"
+            tabIndex={activeTab === 'settings' ? 0 : -1}
             className={`tab-btn${activeTab === 'settings' ? ' active' : ''}`}
             onClick={() => setActiveTab('settings')}
             id="admin-tab-settings"
@@ -690,6 +720,7 @@ export function AdminPage() {
             role="tab"
             aria-selected={activeTab === 'audit'}
             aria-controls="admin-panel-audit"
+            tabIndex={activeTab === 'audit' ? 0 : -1}
             className={`tab-btn${activeTab === 'audit' ? ' active' : ''}`}
             onClick={() => setActiveTab('audit')}
             id="admin-tab-audit"

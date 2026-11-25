@@ -68,6 +68,29 @@ export function MyQuotaPage() {
     (_, i) => i + 1
   );
 
+  function handleQuotaRadioKeyDown(
+    e: React.KeyboardEvent<HTMLDivElement>,
+    idPrefix: string
+  ) {
+    const idx = Math.max(0, quotaOptions.indexOf(requestedQuotas));
+    let nextIdx: number | null = null;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      nextIdx = (idx + 1) % quotaOptions.length;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      nextIdx = (idx - 1 + quotaOptions.length) % quotaOptions.length;
+    } else if (e.key === 'Home') {
+      nextIdx = 0;
+    } else if (e.key === 'End') {
+      nextIdx = quotaOptions.length - 1;
+    }
+    if (nextIdx !== null) {
+      e.preventDefault();
+      const nextVal = quotaOptions[nextIdx];
+      setRequestedQuotas(nextVal);
+      document.getElementById(`${idPrefix}-${nextVal}`)?.focus();
+    }
+  }
+
   // Fluxo 1: Usuário autenticado ainda sem cadastro no bolão -> Código de convite
   if (!profile) {
     async function handleRegister(e: React.FormEvent) {
@@ -181,6 +204,7 @@ export function MyQuotaPage() {
                   className="quota-pills"
                   role="radiogroup"
                   aria-labelledby="reg-quotas-label"
+                  onKeyDown={(e) => handleQuotaRadioKeyDown(e, 'reg-quota-pill')}
                 >
                   {quotaOptions.map((n) => (
                     <button
@@ -189,6 +213,7 @@ export function MyQuotaPage() {
                       role="radio"
                       aria-checked={requestedQuotas === n}
                       aria-label={`${n} cota${n > 1 ? 's' : ''}, total ${formatCurrencyBr(n * publicConfig.quotaPrice)}`}
+                      tabIndex={requestedQuotas === n ? 0 : -1}
                       className={`quota-pill${requestedQuotas === n ? ' selected' : ''}`}
                       onClick={() => setRequestedQuotas(n)}
                       id={`reg-quota-pill-${n}`}
@@ -519,6 +544,7 @@ export function MyQuotaPage() {
                   className="quota-pills"
                   role="radiogroup"
                   aria-labelledby="edit-quotas-label"
+                  onKeyDown={(e) => handleQuotaRadioKeyDown(e, 'edit-quota-pill')}
                 >
                   {quotaOptions.map((n) => (
                     <button
@@ -527,6 +553,7 @@ export function MyQuotaPage() {
                       role="radio"
                       aria-checked={requestedQuotas === n}
                       aria-label={`${n} cota${n > 1 ? 's' : ''}, novo total ${formatCurrencyBr(n * publicConfig.quotaPrice)}`}
+                      tabIndex={requestedQuotas === n ? 0 : -1}
                       className={`quota-pill${requestedQuotas === n ? ' selected' : ''}`}
                       onClick={() => setRequestedQuotas(n)}
                       id={`edit-quota-pill-${n}`}

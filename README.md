@@ -15,7 +15,7 @@ Hospedagem 100% gratuita em **GitHub Pages + Firebase (plano Spark) + Google App
 
 - **Equidade em camadas (100 cotas, padrão de até 3 cotas/pessoa — configurável):** todo participante aprovado e pago garante a 1ª cota antes das extras; desempate dentro da camada por ordem de inscrição; acima de 100 pessoas entra na Fila de Espera.
 - **Linha do Tempo do Bolão:** cronograma completo na página inicial e na página de regras com **data limite para registro**, **data limite para pagamento PIX**, **data de realizar a aposta** na lotérica e **data do sorteio** (todas configuráveis no `/admin`).
-- **PIX Estático (EMVCo / BR Code) sem API bancária:** QR Code + Copia e Cola com valor exato e `txid` único (`MEGACORN26...`). Participantes ainda não aprovados também podem adiantar o PIX (com estorno automático caso recusados).
+- **PIX Estático (EMVCo / BR Code) sem API bancária:** QR Code + Copia e Cola com valor exato e `txid` único (`MEGACORN27...`). Participantes ainda não aprovados também podem adiantar o PIX (com estorno automático caso recusados).
 - **Privacidade & PII:** e-mail pessoal e **CPF opcional** (para constar no bilhete) isolados em `users/{uid}` — nunca aparecem no placar. Pendentes de aprovação aparecem apenas em contador anônimo. Botão LGPD para limpar CPFs após emissão dos bilhetes, e política de **exclusão total das informações em até 30 dias após o sorteio**.
 - **Magic Link + Sessão Persistente + Sign-out:** login sem senha por e-mail pessoal, retorno automático no mesmo navegador (cookies auxiliares + `browserLocalPersistence`), confirmação amigável ao abrir em outro dispositivo, recuperação de link expirado e botão **Sair**.
 - **Jogos, Probabilidades & Conferidor:** suporte a apostas de 6 a 20 dezenas com cálculo exato de chances (Sena, Quina, Quadra) individual e acumulado do bolão + conferidor automático com múltiplas premiações.
@@ -33,7 +33,7 @@ Hospedagem 100% gratuita em **GitHub Pages + Firebase (plano Spark) + Google App
 
 ## 1. Rodar Localmente (Modo Demo Interativo)
 
-Sem nenhuma configuração externa, o app inicia automaticamente em **Modo Demo** (persistido em `localStorage`) com dados de exemplo, código de convite `MEGACORN2026` e botões de login rápido como Moderadora, Participante ou Pendente:
+Sem nenhuma configuração externa, o app inicia automaticamente em **Modo Demo** (persistido em `localStorage`) com dados de exemplo, código de convite `MEGACORN2027` e botões de login rápido como Moderadora, Participante ou Pendente:
 
 ```bash
 npm install
@@ -68,7 +68,7 @@ npx vitest run
      VITE_FIREBASE_APP_ID=...
      ```
 5. **Bootstrap inicial no Firestore (primeira vez):**
-   - Crie o documento `inviteCodes/MEGACORN2026` (ou o código desejado) com `{ "active": true }`.
+   - Crie o documento `inviteCodes/MEGACORN2027` (ou o código desejado) com `{ "active": true }`.
    - Crie o documento `config/public` com `flags: { registrationsOpen: true, quotaEditsOpen: true, pixPaymentOpen: true, boardVisible: true, gamesVisible: true, poolClosed: false }` (ou faça login primeiro).
    - Faça login no site com seu e-mail via Magic Link, conclua o cadastro com o código de convite, e no Console do Firestore abra `users/<seu-uid>` e marque `isModerator: true` e `approvalStatus: "approved"`.
    - A partir daí, você acessa `/admin` e configura chave PIX, valores, prazos, outros moderadores e jogos direto pela interface!
