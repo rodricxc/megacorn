@@ -606,6 +606,13 @@ export function createDemoDataService(): DataService {
       };
 
       state.users[input.uid] = profile;
+      appendLog(
+        state,
+        'Cadastro realizado',
+        profile.email,
+        profile.displayName,
+        `Cadastro com ${profile.requestedQuotas} cota(s) — convite ${profile.inviteCodeUsed}${profile.cpf ? ' (CPF informado)' : ''}.`
+      );
       saveState(state);
       return profile;
     },
@@ -614,6 +621,10 @@ export function createDemoDataService(): DataService {
       const state = loadState();
       const user = state.users[uid];
       if (!user) throw new Error('Perfil não encontrado.');
+
+      const prevName = user.displayName;
+      const prevQuotas = user.requestedQuotas;
+      const prevCpf = user.cpf;
 
       if (typeof updates.displayName === 'string' && updates.displayName.trim()) {
         user.displayName = updates.displayName.trim();
@@ -642,6 +653,29 @@ export function createDemoDataService(): DataService {
         );
       }
       user.updatedAt = Date.now();
+
+      const changes: string[] = [];
+      if (user.displayName !== prevName) {
+        changes.push(`Nome: "${prevName}" -> "${user.displayName}"`);
+      }
+      if (user.requestedQuotas !== prevQuotas) {
+        changes.push(`Cotas: ${prevQuotas} -> ${user.requestedQuotas}`);
+      }
+      if (user.cpf !== prevCpf) {
+        changes.push(
+          user.cpf ? (prevCpf ? 'CPF atualizado' : 'CPF informado') : 'CPF removido'
+        );
+      }
+      if (changes.length > 0) {
+        appendLog(
+          state,
+          'Perfil/cotas editados',
+          user.email,
+          user.displayName,
+          changes.join(' | ')
+        );
+      }
+
       saveState(state);
       return user;
     },
@@ -657,6 +691,13 @@ export function createDemoDataService(): DataService {
       user.paymentNote = note.trim();
       user.paymentReportedAt = Date.now();
       user.updatedAt = Date.now();
+      appendLog(
+        state,
+        'Aviso de PIX enviado',
+        user.email,
+        user.displayName,
+        `Informou PIX para ${user.requestedQuotas} cota(s) — TXID ${user.txid}${user.paymentNote ? ` | Obs.: "${user.paymentNote}"` : ''}.`
+      );
       saveState(state);
       return user;
     },

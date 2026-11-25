@@ -222,9 +222,25 @@ service cloud.firestore {
       allow write: if isModerator();
     }
 
-    // Log de auditoria dos moderadores
+    // Log de auditoria (moderadores + ações auditáveis de participantes com perfil ativo)
+    // Participantes nunca podem ler, editar ou apagar logs; apenas registrar eventos próprios permitidos.
     match /auditLog/{logId} {
-      allow read, create: if isModerator();
+      allow read: if isModerator();
+      allow create: if isModerator()
+        || (
+          hasActiveProfile()
+          && request.resource.data.keys().hasOnly(['action', 'actorEmail', 'targetName', 'details', 'createdAt'])
+          && request.resource.data.action in ['Cadastro realizado', 'Perfil/cotas editados', 'Aviso de PIX enviado']
+          && request.resource.data.actorEmail is string
+          && request.auth.token.email is string
+          && request.resource.data.actorEmail.lower() == request.auth.token.email.lower()
+          && request.resource.data.targetName is string
+          && request.resource.data.targetName.size() >= 1
+          && request.resource.data.targetName.size() <= 100
+          && request.resource.data.details is string
+          && request.resource.data.details.size() <= 400
+          && isReasonableTimestamp(request.resource.data.createdAt)
+        );
       allow update, delete: if false;
     }
   }

@@ -1,4 +1,8 @@
-import type { EquityCalculationResult, UserProfile } from '../types';
+import type {
+  AuditLogEntry,
+  EquityCalculationResult,
+  UserProfile,
+} from '../types';
 import { formatCpf, maskCpf } from './cpf';
 
 function escapeCsvCell(value: string | number | null | undefined): string {
@@ -7,6 +11,18 @@ function escapeCsvCell(value: string | number | null | undefined): string {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;
+}
+
+function triggerCsvDownload(csvContent: string, filename: string): void {
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 export function exportParticipantsCsv(
@@ -72,14 +88,49 @@ export function exportParticipantsCsv(
   const csvContent =
     '\uFEFF' + [headers.map(escapeCsvCell).join(';'), ...rows.map((r) => r.join(';'))].join('\n');
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
   const suffix = includeFullCpf ? 'com-cpf-sensivel' : 'mascarado';
-  link.href = url;
-  link.download = `megacorn-participantes-${suffix}-${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  triggerCsvDownload(
+    csvContent,
+    `megacorn-participantes-${suffix}-${new Date().toISOString().slice(0, 10)}.csv`
+  );
+}
+
+export function buildAuditLogsCsvContent(logs: AuditLogEntry[]): string {
+  const headers = [
+    'Data/Hora',
+    'Timestamp (ISO)',
+    'Acao',
+    'Autor (Email)',
+    'Alvo',
+    'Detalhes',
+  ];
+
+  const rows = logs
+    .slice()
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .map((log) =>
+      [
+        new Date(log.createdAt).toLocaleString('pt-BR'),
+        new Date(log.createdAt).toISOString(),
+        log.action,
+        log.actorEmail,
+        log.targetName,
+        log.details,
+      ].map(escapeCsvCell)
+    );
+
+  return (
+    '\uFEFF' +
+    [headers.map(escapeCsvCell).join(';'), ...rows.map((r) => r.join(';'))].join(
+      '\n'
+    )
+  );
+}
+
+export function exportAuditLogsCsv(logs: AuditLogEntry[]): void {
+  const csvContent = buildAuditLogsCsvContent(logs);
+  triggerCsvDownload(
+    csvContent,
+    `megacorn-auditoria-${new Date().toISOString().slice(0, 10)}.csv`
+  );
 }

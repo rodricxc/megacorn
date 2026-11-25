@@ -34,7 +34,7 @@ import {
   sendEmailViaAppsScript,
 } from '../lib/appsScript';
 import { formatCpf, maskCpf } from '../lib/cpf';
-import { exportParticipantsCsv } from '../lib/csv';
+import { exportAuditLogsCsv, exportParticipantsCsv } from '../lib/csv';
 import { calculateEquityAllocation, calculateRefundsOnClose } from '../lib/equity';
 import {
   calculateGameOdds,
@@ -136,6 +136,11 @@ export function AdminPage() {
   const [newGameNotes, setNewGameNotes] = useState('');
   const [drawInput, setDrawInput] = useState('');
   const [batchProgress, setBatchProgress] = useState<string | null>(null);
+
+  // Auditoria (busca + paginação)
+  const [auditSearch, setAuditSearch] = useState('');
+  const [auditPageSize, setAuditPageSize] = useState<number>(100);
+  const [auditPage, setAuditPage] = useState<number>(1);
 
   useEffect(() => {
     setPubForm(publicConfig);
@@ -243,6 +248,18 @@ export function AdminPage() {
     if (parsedNewGame.length < 6 || parsedNewGame.length > 20) return null;
     return calculateGameOdds(parsedNewGame.length);
   }, [parsedNewGame]);
+
+  const filteredAuditLogs = useMemo(() => {
+    const q = auditSearch.trim().toLowerCase();
+    if (!q) return auditLogs;
+    return auditLogs.filter(
+      (log) =>
+        log.action.toLowerCase().includes(q) ||
+        log.actorEmail.toLowerCase().includes(q) ||
+        log.targetName.toLowerCase().includes(q) ||
+        log.details.toLowerCase().includes(q)
+    );
+  }, [auditLogs, auditSearch]);
 
   if (!authLoading && !authUser) {
     return <Navigate to="/" replace />;
@@ -2414,53 +2431,197 @@ export function AdminPage() {
       )}
 
       {/* ABA 5: AUDITORIA */}
-      {activeTab === 'audit' && (
-        <section
-          className="card stack-md"
-          role="tabpanel"
-          id="admin-panel-audit"
-          aria-labelledby="admin-tab-audit"
-        >
-          <h2>Histórico de Auditoria dos Moderadores</h2>
-          {auditLogs.length === 0 ? (
-            <p style={{ color: 'var(--ink-muted)' }}>Nenhum evento registrado.</p>
-          ) : (
-            <div className="table-wrap">
-              <table className="data-table">
-                <caption className="sr-only">
-                  Histórico de ações realizadas pelos moderadores do bolão
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Data/Hora</th>
-                    <th scope="col">Ação</th>
-                    <th scope="col">Moderador</th>
-                    <th scope="col">Alvo</th>
-                    <th scope="col">Detalhes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {auditLogs.map((log) => (
-                    <tr key={log.id}>
-                      <td className="mono" style={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
-                        {new Date(log.createdAt).toLocaleString('pt-BR')}
-                      </td>
-                      <td>
-                        <strong>{log.action}</strong>
-                      </td>
-                      <td style={{ fontSize: '0.82rem' }}>{log.actorEmail}</td>
-                      <td>{log.targetName}</td>
-                      <td style={{ fontSize: '0.84rem', color: 'var(--ink-secondary)' }}>
-                        {log.details}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {activeTab === 'audit' && (() => {
+        const totalAudit = filteredAuditLogs.length;
+        const totalPages = Math.max(1, Math.ceil(totalAudit / auditPageSize));
+        const safePage = Math.min(auditPage, totalPages);
+        const startIndex = (safePage - 1) * auditPageSize;
+        const paginatedAuditLogs = filteredAuditLogs.slice(
+          startIndex,
+          startIndex + auditPageSize
+        );
+        const rangeStart = totalAudit === 0 ? 0 : startIndex + 1;
+        const rangeEnd = Math.min(startIndex + auditPageSize, totalAudit);
+
+        return (
+          <section
+            className="card stack-md"
+            role="tabpanel"
+            id="admin-panel-audit"
+            aria-labelledby="admin-tab-audit"
+          >
+            <div className="row-between">
+              <div>
+                <h2>Histórico de Auditoria</h2>
+                <p style={{ color: 'var(--ink-secondary)', fontSize: '0.88rem', marginTop: 2 }}>
+                  Registra ações de moderadores e de participantes (cadastros,
+                  edições de perfil/cotas e avisos de PIX — sem gravar CPF).
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={filteredAuditLogs.length === 0}
+                onClick={() => {
+                  exportAuditLogsCsv(filteredAuditLogs);
+                  showToast(
+                    'success',
+                    `CSV de auditoria exportado (${filteredAuditLogs.length} registro(s)).`
+                  );
+                }}
+                id="btn-export-audit-csv"
+              >
+                <Download size={14} aria-hidden="true" />
+                Exportar Auditoria CSV ({filteredAuditLogs.length})
+              </button>
             </div>
-          )}
-        </section>
-      )}
+
+            <div className="row-between" style={{ gap: 10 }}>
+              <div className="row" style={{ flex: 1, minWidth: 260 }}>
+                <input
+                  type="search"
+                  className="input"
+                  style={{ maxWidth: 360 }}
+                  placeholder="Filtrar por ação, e-mail, alvo ou detalhe..."
+                  aria-label="Filtrar histórico de auditoria por ação, e-mail, alvo ou detalhe"
+                  value={auditSearch}
+                  onChange={(e) => {
+                    setAuditSearch(e.target.value);
+                    setAuditPage(1);
+                  }}
+                  id="audit-search-input"
+                />
+                <select
+                  className="select"
+                  style={{ maxWidth: 190 }}
+                  aria-label="Quantidade de registros de auditoria por página"
+                  value={auditPageSize}
+                  onChange={(e) => {
+                    setAuditPageSize(Number(e.target.value));
+                    setAuditPage(1);
+                  }}
+                  id="audit-page-size-select"
+                >
+                  <option value={25}>25 por página</option>
+                  <option value={50}>50 por página</option>
+                  <option value={100}>100 por página</option>
+                </select>
+              </div>
+
+              {totalAudit > 0 && (
+                <div className="row" style={{ gap: 8 }}>
+                  <span className="field-hint">
+                    Exibindo <strong>{rangeStart}–{rangeEnd}</strong> de{' '}
+                    <strong>{totalAudit}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={safePage <= 1}
+                    onClick={() => setAuditPage((p) => Math.max(1, p - 1))}
+                    aria-label="Página anterior da auditoria"
+                    id="audit-prev-page"
+                  >
+                    Anterior
+                  </button>
+                  <span
+                    className="mono"
+                    style={{ fontSize: '0.82rem', color: 'var(--ink-secondary)' }}
+                  >
+                    {safePage}/{totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={safePage >= totalPages}
+                    onClick={() =>
+                      setAuditPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    aria-label="Próxima página da auditoria"
+                    id="audit-next-page"
+                  >
+                    Próxima
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {totalAudit === 0 ? (
+              <p style={{ color: 'var(--ink-muted)' }}>
+                {auditLogs.length === 0
+                  ? 'Nenhum evento registrado.'
+                  : 'Nenhum registro encontrado com esse filtro.'}
+              </p>
+            ) : (
+              <>
+                <div className="table-wrap">
+                  <table className="data-table">
+                    <caption className="sr-only">
+                      Histórico completo de ações realizadas por moderadores e participantes no bolão
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Data/Hora</th>
+                        <th scope="col">Ação</th>
+                        <th scope="col">Autor (E-mail)</th>
+                        <th scope="col">Alvo</th>
+                        <th scope="col">Detalhes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedAuditLogs.map((log) => (
+                        <tr key={log.id}>
+                          <td className="mono" style={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+                            {new Date(log.createdAt).toLocaleString('pt-BR')}
+                          </td>
+                          <td>
+                            <strong>{log.action}</strong>
+                          </td>
+                          <td style={{ fontSize: '0.82rem' }}>{log.actorEmail}</td>
+                          <td>{log.targetName}</td>
+                          <td style={{ fontSize: '0.84rem', color: 'var(--ink-secondary)' }}>
+                            {log.details}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="row-between">
+                    <span className="field-hint">
+                      Página <strong>{safePage}</strong> de{' '}
+                      <strong>{totalPages}</strong> ({rangeStart}–{rangeEnd} de{' '}
+                      {totalAudit} registros)
+                    </span>
+                    <div className="row" style={{ gap: 8 }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        disabled={safePage <= 1}
+                        onClick={() => setAuditPage((p) => Math.max(1, p - 1))}
+                      >
+                        Anterior
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        disabled={safePage >= totalPages}
+                        onClick={() =>
+                          setAuditPage((p) => Math.min(totalPages, p + 1))
+                        }
+                      >
+                        Próxima
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        );
+      })()}
 
       <ConfirmDialog
         open={Boolean(pendingConfirm)}

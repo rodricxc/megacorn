@@ -120,4 +120,48 @@ describe('Admin refund cancellation and database reset keeping admins', () => {
     const logs = await svc.getAuditLogs();
     expect(logs[0]?.action).toBe('Base de dados restaurada');
   });
+
+  it('logs non-admin participant registration, profile/quota edits without CPF PII, and PIX reports, and exports CSV', async () => {
+    const { buildAuditLogsCsvContent } = await import('../lib/csv');
+    const svc = createDemoDataService();
+    const secretCpf = '52998224725';
+
+    const created = await svc.registerParticipant({
+      uid: 'usr_audit_test',
+      email: 'teste.audit@time.com',
+      displayName: 'Maria Teste',
+      cpf: secretCpf,
+      requestedQuotas: 1,
+      inviteCode: 'MEGACORN2027',
+    });
+    expect(created.uid).toBe('usr_audit_test');
+
+    await svc.updateOwnProfile('usr_audit_test', {
+      displayName: 'Maria T. Silva',
+      requestedQuotas: 2,
+      cpf: '',
+    });
+
+    await svc.reportOwnPixPayment('usr_audit_test', 'PIX conta do marido João');
+
+    const logs = await svc.getAuditLogs();
+    const userLogs = logs.filter((l) => l.actorEmail === 'teste.audit@time.com');
+    expect(userLogs.map((l) => l.action)).toEqual([
+      'Aviso de PIX enviado',
+      'Perfil/cotas editados',
+      'Cadastro realizado',
+    ]);
+    // Nunca vaza dígitos de CPF na auditoria
+    for (const entry of userLogs) {
+      expect(entry.details).not.toContain(secretCpf);
+      expect(entry.details).not.toContain('529');
+    }
+
+    const csv = buildAuditLogsCsvContent(userLogs);
+    expect(csv.startsWith('\uFEFFData/Hora;Timestamp (ISO);Acao;Autor (Email);Alvo;Detalhes\n')).toBe(
+      true
+    );
+    expect(csv).toContain('Aviso de PIX enviado');
+    expect(csv).toContain('teste.audit@time.com');
+  });
 });

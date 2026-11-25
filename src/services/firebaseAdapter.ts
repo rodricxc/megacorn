@@ -110,6 +110,24 @@ export function createFirebaseDataService(): DataService {
     });
   }
 
+  async function logParticipantAudit(
+    action: 'Cadastro realizado' | 'Perfil/cotas editados' | 'Aviso de PIX enviado',
+    actorEmail: string,
+    targetName: string,
+    details: string
+  ) {
+    try {
+      await logAudit(
+        action,
+        actorEmail.trim().toLowerCase(),
+        targetName.trim().slice(0, 100) || actorEmail,
+        details.slice(0, 400)
+      );
+    } catch {
+      // Não bloqueia a operação do participante caso regras antigas do Firestore ainda estejam publicadas
+    }
+  }
+
   return {
     isDemoMode: false,
 
@@ -380,6 +398,12 @@ export function createFirebaseDataService(): DataService {
         { merge: true }
       );
       await batch.commit();
+      await logParticipantAudit(
+        'Cadastro realizado',
+        profile.email,
+        profile.displayName,
+        `Cadastro com ${profile.requestedQuotas} cota(s) — convite ${profile.inviteCodeUsed}${profile.cpf ? ' (CPF informado)' : ''}.`
+      );
       return profile;
     },
 
@@ -419,6 +443,28 @@ export function createFirebaseDataService(): DataService {
         batch.set(doc(db, 'board', uid), toBoardEntry(next));
       }
       await batch.commit();
+
+      const changes: string[] = [];
+      if (next.displayName !== current.displayName) {
+        changes.push(`Nome: "${current.displayName}" -> "${next.displayName}"`);
+      }
+      if (next.requestedQuotas !== current.requestedQuotas) {
+        changes.push(`Cotas: ${current.requestedQuotas} -> ${next.requestedQuotas}`);
+      }
+      if (next.cpf !== current.cpf) {
+        changes.push(
+          next.cpf ? (current.cpf ? 'CPF atualizado' : 'CPF informado') : 'CPF removido'
+        );
+      }
+      if (changes.length > 0) {
+        await logParticipantAudit(
+          'Perfil/cotas editados',
+          next.email,
+          next.displayName,
+          changes.join(' | ')
+        );
+      }
+
       return next;
     },
 
@@ -445,6 +491,12 @@ export function createFirebaseDataService(): DataService {
         batch.set(doc(db, 'board', uid), toBoardEntry(next));
       }
       await batch.commit();
+      await logParticipantAudit(
+        'Aviso de PIX enviado',
+        next.email,
+        next.displayName,
+        `Informou PIX para ${next.requestedQuotas} cota(s) — TXID ${next.txid}${next.paymentNote ? ` | Obs.: "${next.paymentNote}"` : ''}.`
+      );
       return next;
     },
 

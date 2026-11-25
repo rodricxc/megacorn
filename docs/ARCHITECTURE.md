@@ -36,7 +36,7 @@ Todos os dados sensíveis (e-mail pessoal e CPF opcional) ficam isolados em `use
 | `stats/summary` | `{ approvedCount, pendingApprovalCount }` (contagem anônima sem nomes) | `hasActiveProfile()` ou Moderadores | Moderadores ou incremento atômico `+1` no batch de criação de `users/{uid}` |
 | `games/{gameId}` | `{ label, numbers: number[], notes, createdAt, createdBy }` | `hasActiveProfile()` (se `gamesVisible`) ou Moderadores | Moderadores |
 | `drawResult/current` | `{ numbers: number[], updatedAt, updatedBy }` | `hasActiveProfile()` (se `gamesVisible`) ou Moderadores | Moderadores |
-| `auditLog/{logId}` | `{ action, actorEmail, targetName, details, createdAt }` | Moderadores | Moderadores (append-only; `update`/`delete`: `false`) |
+| `auditLog/{logId}` | `{ action, actorEmail, targetName, details, createdAt }` | Moderadores | Moderadores + participantes ativos apenas nos próprios eventos permitidos (`Cadastro realizado`, `Perfil/cotas editados`, `Aviso de PIX enviado`, sem CPF; append-only: `update`/`delete`: `false`) |
 
 ### Garantias de Segurança em `firestore.rules`
 - **`hasActiveProfile()`:** exige conta autenticada com documento em `users/{uid}` cujo `approvalStatus` seja `'pending'` ou `'approved'` (impede contas Auth criadas sem código de convite ou usuários recusados/cancelados de lerem Placar, Jogos, Contadores ou Chave PIX).
