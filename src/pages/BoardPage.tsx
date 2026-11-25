@@ -177,9 +177,14 @@ export function BoardPage() {
                   <th scope="col">Participante</th>
                   <th scope="col">Cotas Pedidas</th>
                   <th scope="col">
-                    {publicConfig.flags.poolClosed
-                      ? 'Cotas Finais'
-                      : 'Cotas Estimadas (estado atual)'}
+                    {publicConfig.flags.poolClosed ? (
+                      'Cotas Finais'
+                    ) : (
+                      <>
+                        Cotas Estimadas{' '}
+                        <span className="th-sub">(estado atual)</span>
+                      </>
+                    )}
                   </th>
                   <th scope="col">Pagamento PIX</th>
                   <th scope="col">Nº Cota Bilhete / Entrega</th>
