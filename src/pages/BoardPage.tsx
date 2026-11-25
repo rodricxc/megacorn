@@ -7,6 +7,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
+import { Timeline } from '../components/Timeline';
 import { useApp } from '../context/AppContext';
 import { formatCurrencyBr } from '../lib/appsScript';
 
@@ -131,6 +132,11 @@ export function BoardPage() {
             />
           </div>
         </div>
+      </section>
+
+      <section className="card stack-sm" id="board-timeline-section">
+        <h2>Evolução do Bolão</h2>
+        <Timeline config={publicConfig} />
       </section>
 
       <section className="card stack-md">
