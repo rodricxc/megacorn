@@ -4,6 +4,7 @@ import {
   BookOpen,
   CheckCircle2,
   Clover,
+  ExternalLink,
   KeyRound,
   Mail,
   MessageCircle,
@@ -16,6 +17,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Timeline } from '../components/Timeline';
 import { useApp } from '../context/useApp';
 import { formatCurrencyBr } from '../lib/appsScript';
+import { MEGA_VIRADA_OFFICIAL_URL } from '../lib/lottery';
 import {
   extractInviteCodeFromUrl,
   getRememberedInviteCode,
@@ -183,11 +185,22 @@ export function HomePage() {
             paddingTop: 20,
           }}
         >
-          <div>
-            <h2>Cronograma do {publicConfig.poolName}</h2>
-            <p style={{ color: 'var(--ink-secondary)', fontSize: '0.9rem', marginTop: 2 }}>
-              Acompanhe em que fase o bolão está e o que acontece em cada etapa.
-            </p>
+          <div className="row-between">
+            <div>
+              <h2>Cronograma do {publicConfig.poolName}</h2>
+              <p style={{ color: 'var(--ink-secondary)', fontSize: '0.9rem', marginTop: 2 }}>
+                Acompanhe em que fase o bolão está e o que acontece em cada etapa.
+              </p>
+            </div>
+            <a
+              href={MEGA_VIRADA_OFFICIAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-ghost btn-sm"
+            >
+              Site oficial da Mega da Virada
+              <ExternalLink size={14} aria-hidden="true" />
+            </a>
           </div>
           <Timeline config={publicConfig} />
         </div>

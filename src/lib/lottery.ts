@@ -7,6 +7,9 @@
 export const TOTAL_NUMBERS = 60;
 export const DRAW_SIZE = 6;
 export const TOTAL_COMBINATIONS = 50_063_860; // C(60, 6)
+export const ESTIMATED_MEGA_VIRADA_PRIZE = 1_000_000_000; // R$ 1 bilhão
+export const MEGA_VIRADA_OFFICIAL_URL =
+  'https://www.loteriasonline.caixa.gov.br/silce-web/#/mega-sena/especial';
 
 export function combinations(n: number, k: number): number {
   if (k < 0 || k > n) return 0;
@@ -217,4 +220,35 @@ export function parseLotteryNumbers(input: string): number[] {
     .map((t) => Number(t))
     .filter((n) => Number.isInteger(n) && n >= 1 && n <= 60);
   return Array.from(new Set(tokens)).sort((a, b) => a - b);
+}
+
+export interface EstimatedPrizeShare {
+  estimatedPrize: number;
+  poolTotalQuotas: number;
+  perQuota: number;
+  playerRequestedQuotas: number;
+  playerEstimatedReturn: number;
+}
+
+/**
+ * Simula o retorno bruto por cota e o total proporcional às cotas pedidas
+ * pelo participante para um prêmio principal estimado (padrão: R$ 1 bilhão).
+ */
+export function calculateEstimatedPrizeShare(
+  poolTotalQuotas: number,
+  playerRequestedQuotas: number,
+  estimatedPrize = ESTIMATED_MEGA_VIRADA_PRIZE
+): EstimatedPrizeShare {
+  const safePoolQuotas = Math.max(1, Math.floor(poolTotalQuotas));
+  const safePlayerQuotas = Math.max(0, Math.floor(playerRequestedQuotas));
+  const perQuota = Number((estimatedPrize / safePoolQuotas).toFixed(2));
+  const playerEstimatedReturn = Number((perQuota * safePlayerQuotas).toFixed(2));
+
+  return {
+    estimatedPrize,
+    poolTotalQuotas: safePoolQuotas,
+    perQuota,
+    playerRequestedQuotas: safePlayerQuotas,
+    playerEstimatedReturn,
+  };
 }

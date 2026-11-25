@@ -3,6 +3,7 @@ import {
   Calendar,
   Clover,
   Coins,
+  ExternalLink,
   HelpCircle,
   Lock,
   Scale,
@@ -13,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { Timeline } from '../components/Timeline';
 import { useApp } from '../context/useApp';
 import { formatCurrencyBr, formatDateBr } from '../lib/appsScript';
+import { MEGA_VIRADA_OFFICIAL_URL } from '../lib/lottery';
 
 export function RulesPage() {
   const { authUser, publicConfig } = useApp();
@@ -112,6 +114,22 @@ export function RulesPage() {
               oficial da lotérica, simplifica a divisão dos prêmios e dá espaço
               para todo o time participar com equidade.
             </p>
+            <a
+              href={MEGA_VIRADA_OFFICIAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                fontSize: '0.84rem',
+                fontWeight: 700,
+                marginTop: 4,
+              }}
+            >
+              Ver Mega da Virada no site oficial da Caixa
+              <ExternalLink size={13} aria-hidden="true" />
+            </a>
           </div>
 
           <div className="card-mint stack-xs">

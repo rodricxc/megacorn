@@ -1,9 +1,11 @@
+import { ExternalLink } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { MagicLinkHandler } from './components/MagicLinkHandler';
 import { Navbar } from './components/Navbar';
 import { StatusBanner } from './components/StatusBanner';
 import { AppProvider } from './context/AppContext';
+import { MEGA_VIRADA_OFFICIAL_URL } from './lib/lottery';
 import { AdminPage } from './pages/AdminPage';
 import { BoardPage } from './pages/BoardPage';
 import { GamesPage } from './pages/GamesPage';
@@ -86,7 +88,16 @@ export default function App() {
           <footer className="footer">
             <div className="container row-between">
               <span>
-                <strong>MegaCorn</strong> • Bolão de Fim de Ano do Time
+                <strong>MegaCorn</strong> • Bolão de Fim de Ano do Time •{' '}
+                <a
+                  href={MEGA_VIRADA_OFFICIAL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                >
+                  Mega da Virada (Caixa)
+                  <ExternalLink size={12} aria-hidden="true" />
+                </a>
               </span>
               <span>
                 Privacidade: e-mail e CPF isolados (PII) • Todas as informações

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  calculateEstimatedPrizeShare,
   calculateGameOdds,
   calculatePoolCombinedOdds,
   checkGameAgainstDraw,
+  ESTIMATED_MEGA_VIRADA_PRIZE,
   TOTAL_COMBINATIONS,
 } from './lottery';
 
@@ -40,5 +42,17 @@ describe('Mega-Sena lottery odds and result checker', () => {
     expect(res.senaCount).toBe(0);
     expect(res.quinaCount).toBe(2);
     expect(res.quadraCount).toBe(5);
+  });
+
+  it('computes estimated prize share per quota and for player requested quotas', () => {
+    const share = calculateEstimatedPrizeShare(100, 3);
+    expect(share.estimatedPrize).toBe(ESTIMATED_MEGA_VIRADA_PRIZE);
+    expect(share.poolTotalQuotas).toBe(100);
+    expect(share.perQuota).toBe(10_000_000);
+    expect(share.playerRequestedQuotas).toBe(3);
+    expect(share.playerEstimatedReturn).toBe(30_000_000);
+
+    const zeroPlayer = calculateEstimatedPrizeShare(100, 0);
+    expect(zeroPlayer.playerEstimatedReturn).toBe(0);
   });
 });

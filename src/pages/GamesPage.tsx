@@ -1,19 +1,26 @@
 import {
   Calculator,
   Clover,
+  Coins,
+  ExternalLink,
   EyeOff,
+  Info,
   Sparkles,
   Trophy,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useApp } from '../context/useApp';
+import { formatCurrencyBr } from '../lib/appsScript';
 import {
+  calculateEstimatedPrizeShare,
   calculateGameOdds,
   calculatePoolCombinedOdds,
   checkGameAgainstDraw,
+  ESTIMATED_MEGA_VIRADA_PRIZE,
   formatOneIn,
   formatPercent,
+  MEGA_VIRADA_OFFICIAL_URL,
   parseLotteryNumbers,
 } from '../lib/lottery';
 
@@ -24,6 +31,7 @@ export function GamesPage() {
     authUser,
     profile,
     publicConfig,
+    boardEquity,
     games,
     drawResult,
   } = useApp();
@@ -33,6 +41,7 @@ export function GamesPage() {
     .join(' ');
   const [prevOfficialDraw, setPrevOfficialDraw] = useState(formattedOfficialDraw);
   const [simInput, setSimInput] = useState(formattedOfficialDraw);
+  const [showPrizeDisclaimer, setShowPrizeDisclaimer] = useState(false);
 
   if (formattedOfficialDraw !== prevOfficialDraw) {
     setPrevOfficialDraw(formattedOfficialDraw);
@@ -49,6 +58,29 @@ export function GamesPage() {
   const combinedOdds = useMemo(
     () => calculatePoolCombinedOdds(games.map((g) => g.numbers)),
     [games]
+  );
+
+  const effectivePoolQuotas =
+    publicConfig.flags.poolClosed && boardEquity.totalAllocated > 0
+      ? boardEquity.totalAllocated
+      : publicConfig.totalQuotas;
+
+  const playerRequestedQuotas = profile?.requestedQuotas ?? 0;
+  const myAlloc = profile ? boardEquity.allocations.get(profile.uid) : undefined;
+  const playerEffectiveQuotas = profile
+    ? publicConfig.flags.poolClosed
+      ? (profile.finalQuotas ?? myAlloc?.allocatedQuotas ?? 0)
+      : (myAlloc?.allocatedQuotas ?? null)
+    : null;
+
+  const prizeShare = useMemo(
+    () =>
+      calculateEstimatedPrizeShare(
+        effectivePoolQuotas,
+        playerRequestedQuotas,
+        ESTIMATED_MEGA_VIRADA_PRIZE
+      ),
+    [effectivePoolQuotas, playerRequestedQuotas]
   );
 
   const checkedGames = useMemo(
@@ -187,6 +219,151 @@ export function GamesPage() {
         )}
       </section>
 
+      {/* Simulação de retorno estimado — Prêmio de R$ 1 bilhão */}
+      <section className="card stack-md" id="prize-estimate-card">
+        <div className="row-between">
+          <div className="row" style={{ gap: 8 }}>
+            <Coins size={20} color="var(--corn-600)" aria-hidden="true" />
+            <h2>Retorno Estimado (Mega da Virada — R$ 1 bilhão)</h2>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm has-tooltip"
+              style={{ padding: '4px 8px', minHeight: 32 }}
+              onClick={() => setShowPrizeDisclaimer((prev) => !prev)}
+              aria-expanded={showPrizeDisclaimer}
+              aria-controls="prize-disclaimer-box"
+              aria-label="Informações e disclaimer sobre a estimativa de retorno"
+              data-tooltip="Valor ilustrativo — clique para ler o disclaimer completo"
+              title="Valor ilustrativo — clique para ler o disclaimer completo"
+              id="btn-prize-disclaimer"
+            >
+              <Info size={16} color="var(--unicorn-600)" aria-hidden="true" />
+              <span>Disclaimer</span>
+            </button>
+          </div>
+          <a
+            href={MEGA_VIRADA_OFFICIAL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-secondary btn-sm btn-mobile-full"
+            id="link-games-mega-virada-caixa"
+          >
+            Mega da Virada na Caixa
+            <ExternalLink size={14} aria-hidden="true" />
+          </a>
+        </div>
+
+        {showPrizeDisclaimer && (
+          <div
+            className="alert alert-info"
+            id="prize-disclaimer-box"
+            role="note"
+          >
+            <Info size={17} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <strong>Disclaimer — Simulação meramente ilustrativa:</strong> o
+              valor de <strong>R$ 1 bilhão</strong> é apenas uma estimativa de
+              referência. O prêmio real da Mega da Virada depende da arrecadação
+              oficial da Caixa e é dividido igualmente entre todas as apostas
+              vencedoras no Brasil (se houver mais de 1 ganhador na Sena, cada
+              aposta premiada recebe apenas sua fração). Além disso, dentro do{' '}
+              {publicConfig.poolName}, o rateio considera as{' '}
+              <strong>cotas finais confirmadas</strong> de cada participante
+              após a regra de equidade.
+            </div>
+          </div>
+        )}
+
+        <div className="grid-3">
+          <div className="card-cream">
+            <div className="stat-label">Prêmio estimado (referência)</div>
+            <div className="stat-value" style={{ fontSize: '1.35rem' }}>
+              {formatCurrencyBr(prizeShare.estimatedPrize)}
+            </div>
+            <div className="stat-sub">
+              Cenário base: 1 aposta ganhadora da Sena
+            </div>
+          </div>
+
+          <div className="card-gold">
+            <div className="stat-label">Retorno estimado por cota</div>
+            <div className="stat-value" style={{ fontSize: '1.42rem' }}>
+              {formatCurrencyBr(prizeShare.perQuota)}
+            </div>
+            <div className="stat-sub">
+              Dividido por{' '}
+              <strong>{prizeShare.poolTotalQuotas} cotas</strong>{' '}
+              {publicConfig.flags.poolClosed
+                ? 'finais do bolão'
+                : 'do bolão cheio'}
+            </div>
+          </div>
+
+          <div className="card-mint">
+            <div className="stat-label">
+              Seu retorno estimado
+              {profile
+                ? ` (${playerRequestedQuotas} cota${playerRequestedQuotas === 1 ? '' : 's'} pedida${playerRequestedQuotas === 1 ? '' : 's'})`
+                : ''}
+            </div>
+            {profile ? (
+              <>
+                <div className="stat-value" style={{ fontSize: '1.42rem' }}>
+                  {formatCurrencyBr(prizeShare.playerEstimatedReturn)}
+                </div>
+                <div className="stat-sub">
+                  {playerEffectiveQuotas !== null &&
+                  playerEffectiveQuotas !== playerRequestedQuotas ? (
+                    <>
+                      Pelas suas{' '}
+                      <strong>
+                        {playerEffectiveQuotas} cota
+                        {playerEffectiveQuotas === 1 ? '' : 's'}{' '}
+                        {publicConfig.flags.poolClosed ? 'finais' : 'estimadas'}
+                      </strong>
+                      :{' '}
+                      <strong>
+                        {formatCurrencyBr(
+                          playerEffectiveQuotas * prizeShare.perQuota
+                        )}
+                      </strong>
+                    </>
+                  ) : (
+                    <>
+                      Proporcional às suas {playerRequestedQuotas} cota
+                      {playerRequestedQuotas === 1 ? '' : 's'} pedida
+                      {playerRequestedQuotas === 1 ? '' : 's'}
+                    </>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="stat-value" style={{ fontSize: '1.35rem' }}>
+                  —
+                </div>
+                <div className="stat-sub">
+                  <Link to="/minha-cota">Reserve suas cotas em Minhas Cotas</Link>{' '}
+                  para ver sua simulação.
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <p
+          className="field-hint"
+          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          <Info size={14} aria-hidden="true" style={{ flexShrink: 0 }} />
+          <span>
+            Simulação ilustrativa baseada em prêmio estimado de R$ 1 bilhão com
+            ganhador único na Sena; não constitui garantia de premiação ou valor
+            final.
+          </span>
+        </p>
+      </section>
+
       {/* Conferidor interativo */}
       <section className="card stack-md" id="result-checker-card">
         <div className="row-between">
@@ -194,15 +371,26 @@ export function GamesPage() {
             <Trophy size={20} color="var(--corn-600)" aria-hidden="true" />
             <h2>Conferidor de Resultado</h2>
           </div>
-          {drawResult.numbers.length === 6 ? (
-            <span className="badge badge-success">
-              Resultado oficial publicado pela organização
-            </span>
-          ) : (
-            <span className="badge badge-neutral">
-              Simulador livre — digite 6 dezenas para testar
-            </span>
-          )}
+          <div className="row" style={{ gap: 8 }}>
+            {drawResult.numbers.length === 6 ? (
+              <span className="badge badge-success">
+                Resultado oficial publicado pela organização
+              </span>
+            ) : (
+              <span className="badge badge-neutral">
+                Simulador livre — digite 6 dezenas para testar
+              </span>
+            )}
+            <a
+              href={MEGA_VIRADA_OFFICIAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-ghost btn-sm"
+            >
+              Site oficial da Caixa
+              <ExternalLink size={13} aria-hidden="true" />
+            </a>
+          </div>
         </div>
 
         <div className="row" style={{ alignItems: 'flex-end' }}>
