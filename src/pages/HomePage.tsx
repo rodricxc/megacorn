@@ -90,11 +90,11 @@ export function HomePage() {
           <div className="stack-md">
             <div className="row" style={{ gap: 8 }}>
               <span className="badge badge-warning">
-                <Sparkles size={13} />
+                <Sparkles size={13} aria-hidden="true" />
                 Edição {publicConfig.edition}
               </span>
               <span className="badge badge-success">
-                <Clover size={13} />
+                <Clover size={13} aria-hidden="true" />
                 {publicConfig.totalQuotas} cotas • {formatCurrencyBr(publicConfig.quotaPrice)} cada
               </span>
             </div>
@@ -119,11 +119,11 @@ export function HomePage() {
                     id="hero-go-my-quota"
                   >
                     Ir para Minha Cota
-                    <ArrowRight size={16} />
+                    <ArrowRight size={16} aria-hidden="true" />
                   </Link>
                   {profile?.isModerator && (
                     <Link to="/admin" className="btn btn-unicorn" id="hero-go-admin">
-                      <ShieldCheck size={16} />
+                      <ShieldCheck size={16} aria-hidden="true" />
                       Abrir Painel Admin
                     </Link>
                   )}
@@ -135,7 +135,7 @@ export function HomePage() {
                 className="btn btn-secondary"
                 id="hero-read-rules"
               >
-                <BookOpen size={16} />
+                <BookOpen size={16} aria-hidden="true" />
                 Ler Regras e Funcionamento
               </Link>
             </div>
@@ -187,8 +187,8 @@ export function HomePage() {
             </div>
 
             {urlInviteCode && !sentTo && (
-              <div className="alert alert-success">
-                <KeyRound size={17} style={{ flexShrink: 0, marginTop: 2 }} />
+              <div className="alert alert-success" role="status" aria-live="polite">
+                <KeyRound size={17} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
                 <span>
                   Código de convite <strong className="mono">{urlInviteCode}</strong>{' '}
                   preenchido automaticamente pelo link!
@@ -198,8 +198,8 @@ export function HomePage() {
 
             {sentTo ? (
               <div className="stack-sm">
-                <div className="alert alert-success">
-                  <CheckCircle2 size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+                <div className="alert alert-success" role="status" aria-live="polite">
+                  <CheckCircle2 size={18} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
                   <div>
                     <strong>Magic Link enviado para {sentTo}!</strong>
                     <p style={{ marginTop: 4 }}>
@@ -225,7 +225,7 @@ export function HomePage() {
                       id="btn-demo-complete-magic-link"
                     >
                       Abrir link de {sentTo} agora
-                      <ArrowRight size={15} />
+                      <ArrowRight size={15} aria-hidden="true" />
                     </button>
                   </div>
                 )}
@@ -252,8 +252,9 @@ export function HomePage() {
                     placeholder="Ex.: MEGACORN2027"
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                    aria-describedby="login-invite-hint"
                   />
-                  <span className="field-hint">
+                  <span id="login-invite-hint" className="field-hint">
                     Obrigatório para cadastro e acesso. Também aceito direto pela
                     URL (<code>?convite=CODIGO</code>).
                   </span>
@@ -265,6 +266,7 @@ export function HomePage() {
                     id="login-email-input"
                     type="email"
                     required
+                    autoComplete="email"
                     className="input"
                     placeholder="seu.nome@gmail.com"
                     value={email}
@@ -272,7 +274,11 @@ export function HomePage() {
                   />
                 </div>
 
-                {error && <div className="alert alert-danger">{error}</div>}
+                {error && (
+                  <div className="alert alert-danger" role="alert">
+                    {error}
+                  </div>
+                )}
 
                 <button
                   type="submit"
@@ -280,7 +286,7 @@ export function HomePage() {
                   disabled={sending}
                   id="btn-send-magic-link"
                 >
-                  <Mail size={16} />
+                  <Mail size={16} aria-hidden="true" />
                   {sending
                     ? 'Validando e enviando...'
                     : 'Validar convite e receber link no e-mail'}
@@ -291,7 +297,7 @@ export function HomePage() {
             {publicConfig.organizerContact && (
               <div className="card-cream" style={{ fontSize: '0.85rem' }}>
                 <div className="row" style={{ gap: 6 }}>
-                  <MessageCircle size={15} color="var(--luck-600)" />
+                  <MessageCircle size={15} color="var(--luck-600)" aria-hidden="true" />
                   <strong>Contato dos organizadores</strong>
                 </div>
                 <p style={{ color: 'var(--ink-secondary)', marginTop: 4 }}>
@@ -360,7 +366,7 @@ export function HomePage() {
                     }
                     id="btn-demo-login-admin"
                   >
-                    <ShieldCheck size={14} />
+                    <ShieldCheck size={14} aria-hidden="true" />
                     Entrar como Moderadora
                   </button>
                   <button
@@ -371,7 +377,7 @@ export function HomePage() {
                     }
                     id="btn-demo-login-member"
                   >
-                    <User size={14} />
+                    <User size={14} aria-hidden="true" />
                     Entrar como Participante
                   </button>
                   <button
@@ -382,7 +388,7 @@ export function HomePage() {
                     }
                     id="btn-demo-login-pending"
                   >
-                    <User size={14} />
+                    <User size={14} aria-hidden="true" />
                     Entrar como Pendente
                   </button>
                 </div>

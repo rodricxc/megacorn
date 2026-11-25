@@ -39,7 +39,7 @@ export function RulesPage() {
             id="rules-cta-participate"
           >
             {authUser ? 'Ir para Minha Cota' : 'Participar agora'}
-            <ArrowRight size={16} />
+            <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </div>
 
@@ -72,7 +72,7 @@ export function RulesPage() {
       {/* Cronograma / Timeline completa */}
       <section className="card stack-md" id="rules-timeline-section">
         <div className="row" style={{ gap: 10 }}>
-          <Calendar size={22} color="var(--luck-500)" />
+          <Calendar size={22} color="var(--luck-500)" aria-hidden="true" />
           <div>
             <h2>Linha do Tempo do Bolão</h2>
             <p style={{ color: 'var(--ink-secondary)', fontSize: '0.9rem' }}>
@@ -87,7 +87,7 @@ export function RulesPage() {
       {/* Por que essas regras? (Transparência da organização) */}
       <section className="card stack-md" id="rules-rationale-section">
         <div className="row" style={{ gap: 10 }}>
-          <HelpCircle size={22} color="var(--corn-600)" />
+          <HelpCircle size={22} color="var(--corn-600)" aria-hidden="true" />
           <div>
             <h2>Por que esses limites e esse valor de cota?</h2>
             <p style={{ color: 'var(--ink-secondary)', fontSize: '0.9rem' }}>
@@ -139,7 +139,7 @@ export function RulesPage() {
       <div className="grid-2">
         <section className="card stack-sm">
           <div className="row" style={{ gap: 10 }}>
-            <Scale size={22} color="var(--unicorn-500)" />
+            <Scale size={22} color="var(--unicorn-500)" aria-hidden="true" />
             <h2>1. Regra de Equidade (Cotas Justas)</h2>
           </div>
           <p style={{ color: 'var(--ink-secondary)' }}>
@@ -187,7 +187,7 @@ export function RulesPage() {
 
         <section className="card stack-sm">
           <div className="row" style={{ gap: 10 }}>
-            <Calendar size={22} color="var(--luck-500)" />
+            <Calendar size={22} color="var(--luck-500)" aria-hidden="true" />
             <h2>2. Fila de Espera &amp; Prazos</h2>
           </div>
           <p style={{ color: 'var(--ink-secondary)' }}>
@@ -238,7 +238,7 @@ export function RulesPage() {
 
         <section className="card stack-sm">
           <div className="row" style={{ gap: 10 }}>
-            <Coins size={22} color="var(--corn-600)" />
+            <Coins size={22} color="var(--corn-600)" aria-hidden="true" />
             <h2>3. Pagamento PIX, Comprovantes &amp; Estornos</h2>
           </div>
           <ul
@@ -285,7 +285,7 @@ export function RulesPage() {
             </li>
           </ul>
           <div className="alert alert-info" style={{ marginTop: 4 }}>
-            <Undo2 size={17} style={{ flexShrink: 0, marginTop: 2 }} />
+            <Undo2 size={17} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
             <span>
               Depois de marcar “Já fiz o PIX”, a edição de cotas fica bloqueada
               para você. Se precisar ajustar ou desistir, fale com um moderador.
@@ -295,7 +295,7 @@ export function RulesPage() {
 
         <section className="card stack-sm">
           <div className="row" style={{ gap: 10 }}>
-            <ShieldCheck size={22} color="var(--luck-500)" />
+            <ShieldCheck size={22} color="var(--luck-500)" aria-hidden="true" />
             <h2>4. Acesso Exclusivo, Privacidade (PII) e CPF</h2>
           </div>
           <ul
@@ -336,7 +336,7 @@ export function RulesPage() {
           </ul>
           <div className="card-mint" style={{ fontSize: '0.88rem' }}>
             <div className="row" style={{ gap: 6 }}>
-              <Lock size={15} />
+              <Lock size={15} aria-hidden="true" />
               <strong>Transparência dos jogos &amp; prêmios:</strong>
             </div>
             <p style={{ marginTop: 4, color: 'var(--ink-secondary)' }}>
@@ -359,7 +359,7 @@ export function RulesPage() {
 
       <div className="card-gold row-between">
         <div className="row" style={{ gap: 10 }}>
-          <Clover size={20} />
+          <Clover size={20} aria-hidden="true" />
           <strong>
             Os organizadores podem abrir ou pausar etapas (inscrições, edição de
             cotas, PIX, placar e jogos) a qualquer momento conforme o cronograma.

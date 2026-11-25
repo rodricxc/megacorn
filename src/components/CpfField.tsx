@@ -21,6 +21,8 @@ export function CpfField({
   const digits = sanitizeCpf(value);
   const hasValue = digits.length > 0;
   const valid = !hasValue || isValidCpf(digits);
+  const hintId = `${id}-hint`;
+  const errorId = `${id}-error`;
 
   async function handleCopy() {
     if (!digits) return;
@@ -41,6 +43,7 @@ export function CpfField({
           id={id}
           type="text"
           inputMode="numeric"
+          autoComplete="off"
           className="input mono"
           style={{ flex: 1 }}
           placeholder="000.000.000-00 (opcional)"
@@ -52,6 +55,7 @@ export function CpfField({
           onFocus={() => setRevealed(true)}
           onChange={(e) => onChange(sanitizeCpf(e.target.value))}
           aria-invalid={!valid}
+          aria-describedby={valid ? hintId : `${errorId} ${hintId}`}
         />
 
         {digits.length === 11 && (
@@ -60,30 +64,51 @@ export function CpfField({
               type="button"
               className="btn btn-secondary btn-sm"
               onClick={() => setRevealed((r) => !r)}
-              title={revealed ? 'Ocultar CPF' : 'Revelar CPF'}
+              aria-label={revealed ? 'Ocultar CPF' : 'Revelar CPF'}
+              aria-pressed={revealed}
             >
-              {revealed ? <EyeOff size={15} /> : <Eye size={15} />}
+              {revealed ? (
+                <EyeOff size={15} aria-hidden="true" />
+              ) : (
+                <Eye size={15} aria-hidden="true" />
+              )}
             </button>
             <button
               type="button"
               className="btn btn-secondary btn-sm"
               onClick={handleCopy}
-              title="Copiar CPF"
+              aria-label={copied ? 'CPF copiado' : 'Copiar CPF'}
             >
-              {copied ? <Check size={15} /> : <Copy size={15} />}
+              {copied ? (
+                <Check size={15} aria-hidden="true" />
+              ) : (
+                <Copy size={15} aria-hidden="true" />
+              )}
             </button>
           </>
         )}
       </div>
 
+      <span className="sr-only" role="status" aria-live="polite">
+        {copied ? 'CPF copiado para a área de transferência.' : ''}
+      </span>
+
       {!valid && (
-        <span style={{ color: 'var(--danger-ink)', fontSize: '0.8rem', fontWeight: 600 }}>
+        <span
+          id={errorId}
+          role="alert"
+          style={{ color: 'var(--danger-ink)', fontSize: '0.8rem', fontWeight: 600 }}
+        >
           CPF inválido. Confira os 11 dígitos ou deixe em branco (campo opcional).
         </span>
       )}
 
-      <span className="field-hint" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-        <Lock size={12} />
+      <span
+        id={hintId}
+        className="field-hint"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
+      >
+        <Lock size={12} aria-hidden="true" />
         Dado privado (PII): visível apenas para você e para os moderadores — nunca aparece no placar. Todas as informações serão deletadas em até 30 dias após o sorteio.
       </span>
     </div>

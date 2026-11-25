@@ -92,8 +92,8 @@ export function MagicLinkHandler() {
   if (state === 'checking') {
     return (
       <div className="container" style={{ marginTop: 18 }}>
-        <div className="alert alert-info">
-          <CheckCircle2 size={18} />
+        <div className="alert alert-info" role="status" aria-live="polite">
+          <CheckCircle2 size={18} aria-hidden="true" />
           <span>Validando seu Magic Link do MegaCorn...</span>
         </div>
       </div>
@@ -102,18 +102,23 @@ export function MagicLinkHandler() {
 
   return (
     <div className="container" style={{ marginTop: 18 }}>
-      <div className="card stack-sm" id="magic-link-return-card">
+      <div
+        className="card stack-sm"
+        id="magic-link-return-card"
+        role={state === 'error' ? 'alert' : 'region'}
+        aria-label="Retorno do login por Magic Link"
+      >
         <div className="row" style={{ gap: 10 }}>
           {state === 'needs_email' ? (
-            <Mail size={20} color="var(--unicorn-500)" />
+            <Mail size={20} color="var(--unicorn-500)" aria-hidden="true" />
           ) : (
-            <AlertTriangle size={20} color="var(--danger-ink)" />
+            <AlertTriangle size={20} color="var(--danger-ink)" aria-hidden="true" />
           )}
-          <h3>
+          <h2>
             {state === 'needs_email'
               ? 'Confirme seu e-mail para concluir o login'
               : 'Link de acesso expirado ou já utilizado'}
-          </h3>
+          </h2>
         </div>
         <p style={{ color: 'var(--ink-secondary)', fontSize: '0.92rem' }}>
           {message}
@@ -126,6 +131,7 @@ export function MagicLinkHandler() {
               id="magic-return-email"
               type="email"
               required
+              autoComplete="email"
               className="input"
               placeholder="voce@gmail.com"
               value={emailInput}
@@ -150,7 +156,7 @@ export function MagicLinkHandler() {
               onClick={handleResend}
               id="btn-resend-magic-link"
             >
-              <RefreshCw size={15} />
+              <RefreshCw size={15} aria-hidden="true" />
               {resendCooldown > 0
                 ? `Aguarde ${resendCooldown}s`
                 : 'Enviar novo Magic Link'}
@@ -158,7 +164,11 @@ export function MagicLinkHandler() {
           )}
         </form>
 
-        {resentInfo && <div className="alert alert-success">{resentInfo}</div>}
+        {resentInfo && (
+          <div className="alert alert-success" role="status" aria-live="polite">
+            {resentInfo}
+          </div>
+        )}
       </div>
     </div>
   );

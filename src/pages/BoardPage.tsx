@@ -30,7 +30,9 @@ export function BoardPage() {
   if (authLoading || dataLoading) {
     return (
       <div className="container">
-        <div className="card">Carregando placar de transparência...</div>
+        <div className="card" role="status" aria-busy="true">
+          Carregando placar de transparência...
+        </div>
       </div>
     );
   }
@@ -122,10 +124,19 @@ export function BoardPage() {
 
         <div className="stack-xs">
           <div className="row-between" style={{ fontSize: '0.84rem', fontWeight: 700 }}>
-            <span>Preenchimento das {publicConfig.totalQuotas} cotas</span>
+            <span id="board-progress-label">
+              Preenchimento das {publicConfig.totalQuotas} cotas
+            </span>
             <span>{fillPercent}%</span>
           </div>
-          <div className="progress-track">
+          <div
+            className="progress-track"
+            role="progressbar"
+            aria-labelledby="board-progress-label"
+            aria-valuenow={fillPercent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
             <div
               className="progress-fill"
               style={{ width: `${fillPercent}%` }}
@@ -142,7 +153,7 @@ export function BoardPage() {
       <section className="card stack-md">
         <div className="row-between">
           <div className="row" style={{ gap: 8 }}>
-            <Users size={20} color="var(--luck-500)" />
+            <Users size={20} color="var(--luck-500)" aria-hidden="true" />
             <h2>Participantes Aprovados</h2>
           </div>
           <span className="field-hint">
@@ -151,25 +162,28 @@ export function BoardPage() {
         </div>
 
         {boardEntries.length === 0 ? (
-          <div className="card-cream">
+          <div className="card-cream" role="status">
             Nenhum participante aprovado ainda.
           </div>
         ) : (
           <div className="table-wrap">
             <table className="data-table">
+              <caption className="sr-only">
+                Lista de participantes aprovados no bolão {publicConfig.poolName}, ordenada por inscrição
+              </caption>
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Participante</th>
-                  <th>Cotas Pedidas</th>
-                  <th>
+                  <th scope="col">#</th>
+                  <th scope="col">Participante</th>
+                  <th scope="col">Cotas Pedidas</th>
+                  <th scope="col">
                     {publicConfig.flags.poolClosed
                       ? 'Cotas Finais'
                       : 'Cotas Estimadas (estado atual)'}
                   </th>
-                  <th>Pagamento PIX</th>
-                  <th>Nº Cota Bilhete / Entrega</th>
-                  <th>Observação</th>
+                  <th scope="col">Pagamento PIX</th>
+                  <th scope="col">Nº Cota Bilhete / Entrega</th>
+                  <th scope="col">Observação</th>
                 </tr>
               </thead>
               <tbody>
@@ -212,13 +226,13 @@ export function BoardPage() {
                       <td>
                         {entry.paymentStatus === 'confirmed' && (
                           <span className="badge badge-success">
-                            <CheckCircle2 size={13} />
+                            <CheckCircle2 size={13} aria-hidden="true" />
                             Confirmado ({entry.paidQuotas}c)
                           </span>
                         )}
                         {entry.paymentStatus === 'reported' && (
                           <span className="badge badge-warning">
-                            <Clock size={13} />
+                            <Clock size={13} aria-hidden="true" />
                             Avisou PIX
                           </span>
                         )}
@@ -230,13 +244,16 @@ export function BoardPage() {
                         {entry.assignedTicketNumbers || entry.receiptDelivered ? (
                           <div className="row" style={{ gap: 6 }}>
                             {entry.assignedTicketNumbers && (
-                              <span className="badge badge-warning mono">
+                              <span
+                                className="badge badge-warning mono"
+                                aria-label={`Cota do bilhete ${entry.assignedTicketNumbers}`}
+                              >
                                 {entry.assignedTicketNumbers}
                               </span>
                             )}
                             {entry.receiptDelivered && (
                               <span className="badge badge-success">
-                                <CheckCircle2 size={12} />
+                                <CheckCircle2 size={12} aria-hidden="true" />
                                 Em mãos
                               </span>
                             )}

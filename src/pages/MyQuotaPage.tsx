@@ -56,7 +56,9 @@ export function MyQuotaPage() {
   if (authLoading || dataLoading) {
     return (
       <div className="container">
-        <div className="card">Carregando sua participação no MegaCorn...</div>
+        <div className="card" role="status" aria-busy="true">
+          Carregando sua participação no MegaCorn...
+        </div>
       </div>
     );
   }
@@ -172,14 +174,21 @@ export function MyQuotaPage() {
               </div>
 
               <div className="field">
-                <label>
+                <span id="reg-quotas-label" style={{ fontSize: '0.85rem', fontWeight: 700 }}>
                   Quantas cotas deseja reservar? ({formatCurrencyBr(publicConfig.quotaPrice)} cada)
-                </label>
-                <div className="quota-pills">
+                </span>
+                <div
+                  className="quota-pills"
+                  role="radiogroup"
+                  aria-labelledby="reg-quotas-label"
+                >
                   {quotaOptions.map((n) => (
                     <button
                       key={n}
                       type="button"
+                      role="radio"
+                      aria-checked={requestedQuotas === n}
+                      aria-label={`${n} cota${n > 1 ? 's' : ''}, total ${formatCurrencyBr(n * publicConfig.quotaPrice)}`}
                       className={`quota-pill${requestedQuotas === n ? ' selected' : ''}`}
                       onClick={() => setRequestedQuotas(n)}
                       id={`reg-quota-pill-${n}`}
@@ -205,7 +214,11 @@ export function MyQuotaPage() {
               />
 
               {feedback && (
-                <div className={`alert alert-${feedback.type}`}>
+                <div
+                  className={`alert alert-${feedback.type}`}
+                  role={feedback.type === 'danger' ? 'alert' : 'status'}
+                  aria-live={feedback.type === 'danger' ? 'assertive' : 'polite'}
+                >
                   {feedback.text}
                 </div>
               )}
@@ -216,7 +229,7 @@ export function MyQuotaPage() {
                 disabled={saving}
                 id="btn-submit-registration"
               >
-                <Sparkles size={16} />
+                <Sparkles size={16} aria-hidden="true" />
                 {saving ? 'Validando convite...' : 'Confirmar minha reserva'}
               </button>
             </form>
@@ -497,14 +510,23 @@ export function MyQuotaPage() {
           </div>
 
           <div className="field">
-            <label>Quantidade de cotas desejadas</label>
+            <span id="edit-quotas-label" style={{ fontSize: '0.85rem', fontWeight: 700 }}>
+              Quantidade de cotas desejadas
+            </span>
             {canEditQuotas ? (
               <>
-                <div className="quota-pills">
+                <div
+                  className="quota-pills"
+                  role="radiogroup"
+                  aria-labelledby="edit-quotas-label"
+                >
                   {quotaOptions.map((n) => (
                     <button
                       key={n}
                       type="button"
+                      role="radio"
+                      aria-checked={requestedQuotas === n}
+                      aria-label={`${n} cota${n > 1 ? 's' : ''}, novo total ${formatCurrencyBr(n * publicConfig.quotaPrice)}`}
                       className={`quota-pill${requestedQuotas === n ? ' selected' : ''}`}
                       onClick={() => setRequestedQuotas(n)}
                       id={`edit-quota-pill-${n}`}
@@ -532,7 +554,13 @@ export function MyQuotaPage() {
           </div>
 
           {feedback && (
-            <div className={`alert alert-${feedback.type}`}>{feedback.text}</div>
+            <div
+              className={`alert alert-${feedback.type}`}
+              role={feedback.type === 'danger' ? 'alert' : 'status'}
+              aria-live={feedback.type === 'danger' ? 'assertive' : 'polite'}
+            >
+              {feedback.text}
+            </div>
           )}
 
           <div>
@@ -542,7 +570,7 @@ export function MyQuotaPage() {
               disabled={saving}
               id="btn-save-profile"
             >
-              <Save size={15} />
+              <Save size={15} aria-hidden="true" />
               {saving ? 'Salvando...' : 'Salvar alterações'}
             </button>
           </div>

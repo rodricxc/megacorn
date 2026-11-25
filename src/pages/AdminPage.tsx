@@ -236,7 +236,9 @@ export function AdminPage() {
   if (authLoading || dataLoading) {
     return (
       <div className="container">
-        <div className="card">Carregando painel dos moderadores...</div>
+        <div className="card" role="status" aria-busy="true">
+          Carregando painel dos moderadores...
+        </div>
       </div>
     );
   }
@@ -594,7 +596,7 @@ export function AdminPage() {
         <div className="row-between">
           <div>
             <span className="badge badge-unicorn">
-              <ShieldCheck size={13} />
+              <ShieldCheck size={13} aria-hidden="true" />
               Painel dos Moderadores
             </span>
             <h1 style={{ marginTop: 6 }}>Administração — {publicConfig.poolName}</h1>
@@ -609,7 +611,7 @@ export function AdminPage() {
                 showToast('info', 'Dados de demonstração restaurados.');
               }}
             >
-              <RefreshCw size={14} />
+              <RefreshCw size={14} aria-hidden="true" />
               Resetar Demo
             </button>
           )}
@@ -634,67 +636,96 @@ export function AdminPage() {
           </div>
         </div>
 
-        <div className="tabs" role="tablist">
+        <div className="tabs" role="tablist" aria-label="Seções do painel administrativo">
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'participants'}
+            aria-controls="admin-panel-participants"
             className={`tab-btn${activeTab === 'participants' ? ' active' : ''}`}
             onClick={() => setActiveTab('participants')}
             id="admin-tab-participants"
           >
-            <Users size={15} />
+            <Users size={15} aria-hidden="true" />
             Participantes &amp; PIX ({allUsers.length})
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'stages'}
+            aria-controls="admin-panel-stages"
             className={`tab-btn${activeTab === 'stages' ? ' active' : ''}`}
             onClick={() => setActiveTab('stages')}
             id="admin-tab-stages"
           >
-            <Sliders size={15} />
+            <Sliders size={15} aria-hidden="true" />
             Etapas &amp; Fechamento
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'games'}
+            aria-controls="admin-panel-games"
             className={`tab-btn${activeTab === 'games' ? ' active' : ''}`}
             onClick={() => setActiveTab('games')}
             id="admin-tab-games"
           >
-            <Clover size={15} />
+            <Clover size={15} aria-hidden="true" />
             Jogos &amp; Sorteio ({games.length})
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'settings'}
+            aria-controls="admin-panel-settings"
             className={`tab-btn${activeTab === 'settings' ? ' active' : ''}`}
             onClick={() => setActiveTab('settings')}
             id="admin-tab-settings"
           >
-            <Settings size={15} />
+            <Settings size={15} aria-hidden="true" />
             Configurações &amp; E-mail
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'audit'}
+            aria-controls="admin-panel-audit"
             className={`tab-btn${activeTab === 'audit' ? ' active' : ''}`}
             onClick={() => setActiveTab('audit')}
             id="admin-tab-audit"
           >
-            <ClipboardList size={15} />
+            <ClipboardList size={15} aria-hidden="true" />
             Auditoria ({auditLogs.length})
           </button>
         </div>
 
-        {toast && <div className={`alert alert-${toast.type}`}>{toast.text}</div>}
+        {toast && (
+          <div
+            className={`alert alert-${toast.type}`}
+            role={toast.type === 'danger' ? 'alert' : 'status'}
+            aria-live={toast.type === 'danger' ? 'assertive' : 'polite'}
+          >
+            {toast.text}
+          </div>
+        )}
       </section>
 
       {/* ABA 1: PARTICIPANTES & PIX */}
       {activeTab === 'participants' && (
-        <section className="card stack-md">
+        <section
+          className="card stack-md"
+          role="tabpanel"
+          id="admin-panel-participants"
+          aria-labelledby="admin-tab-participants"
+        >
           <div className="row-between">
             <div className="row" style={{ flex: 1, minWidth: 260 }}>
               <input
                 type="search"
                 className="input"
                 style={{ maxWidth: 320 }}
-                placeholder="Buscar por nome, e-mail ou TXID..."
+                placeholder="Buscar por nome, e-mail, bilhete ou TXID..."
+                aria-label="Buscar participantes por nome, e-mail, número do bilhete ou TXID"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 id="admin-search-input"
@@ -702,6 +733,7 @@ export function AdminPage() {
               <select
                 className="select"
                 style={{ maxWidth: 220 }}
+                aria-label="Filtrar participantes por status"
                 value={statusFilter}
                 onChange={(e) =>
                   setStatusFilter(e.target.value as typeof statusFilter)
@@ -754,7 +786,7 @@ export function AdminPage() {
               disabled={Boolean(batchProgress)}
               id="btn-batch-reminder-emails"
             >
-              <Mail size={14} />
+              <Mail size={14} aria-hidden="true" />
               {batchProgress || 'Enviar cobrança por e-mail (pendentes)'}
             </button>
             <button
@@ -763,7 +795,7 @@ export function AdminPage() {
               onClick={handleCopyWhatsappList}
               id="btn-copy-whatsapp-reminder"
             >
-              <Copy size={14} />
+              <Copy size={14} aria-hidden="true" />
               Copiar lembrete p/ WhatsApp
             </button>
             <button
@@ -779,7 +811,7 @@ export function AdminPage() {
               }
               id="btn-export-csv-masked"
             >
-              <Download size={14} />
+              <Download size={14} aria-hidden="true" />
               CSV (CPF mascarado)
             </button>
             <button
@@ -795,7 +827,7 @@ export function AdminPage() {
               }
               id="btn-export-csv-full-cpf"
             >
-              <Download size={14} />
+              <Download size={14} aria-hidden="true" />
               CSV p/ bilhete (CPF completo)
             </button>
             {cpfStoredCount > 0 && (
@@ -805,7 +837,7 @@ export function AdminPage() {
                 onClick={handlePurgeCpfs}
                 id="btn-purge-cpfs"
               >
-                <Trash2 size={14} />
+                <Trash2 size={14} aria-hidden="true" />
                 Limpar CPFs (LGPD)
               </button>
             )}
@@ -813,15 +845,18 @@ export function AdminPage() {
 
           <div className="table-wrap">
             <table className="data-table">
+              <caption className="sr-only">
+                Gestão administrativa de participantes, pagamentos PIX, estornos e bilhetes
+              </caption>
               <thead>
                 <tr>
-                  <th>Participante / E-mail</th>
-                  <th>CPF (PII)</th>
-                  <th>Aprovação</th>
-                  <th>Cotas &amp; TXID</th>
-                  <th>PIX / Estorno</th>
-                  <th>Bilhete / Entrega em Mãos</th>
-                  <th>Ações</th>
+                  <th scope="col">Participante / E-mail</th>
+                  <th scope="col">CPF (PII)</th>
+                  <th scope="col">Aprovação</th>
+                  <th scope="col">Cotas &amp; TXID</th>
+                  <th scope="col">PIX / Estorno</th>
+                  <th scope="col">Bilhete / Entrega em Mãos</th>
+                  <th scope="col">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -857,14 +892,23 @@ export function AdminPage() {
                                   [u.uid]: !prev[u.uid],
                                 }))
                               }
-                              title={cpfVisible ? 'Ocultar CPF' : 'Revelar CPF'}
+                              aria-label={
+                                cpfVisible
+                                  ? `Ocultar CPF de ${u.displayName}`
+                                  : `Revelar CPF de ${u.displayName}`
+                              }
+                              aria-pressed={cpfVisible}
                             >
-                              {cpfVisible ? <EyeOff size={13} /> : <Eye size={13} />}
+                              {cpfVisible ? (
+                                <EyeOff size={13} aria-hidden="true" />
+                              ) : (
+                                <Eye size={13} aria-hidden="true" />
+                              )}
                             </button>
                           </div>
                         ) : (
                           <span style={{ color: 'var(--ink-muted)', fontSize: '0.8rem' }}>
-                            —
+                            Não informado
                           </span>
                         )}
                       </td>
@@ -915,9 +959,9 @@ export function AdminPage() {
                                 setBusyId(null);
                               }
                             }}
-                            title="Reduzir 1 cota"
+                            aria-label={`Reduzir 1 cota de ${u.displayName}`}
                           >
-                            <Minus size={12} />
+                            <Minus size={12} aria-hidden="true" />
                           </button>
                           <button
                             type="button"
@@ -945,9 +989,9 @@ export function AdminPage() {
                                 setBusyId(null);
                               }
                             }}
-                            title="Adicionar 1 cota"
+                            aria-label={`Adicionar 1 cota para ${u.displayName}`}
                           >
-                            <Plus size={12} />
+                            <Plus size={12} aria-hidden="true" />
                           </button>
                         </div>
                         {u.approvalStatus === 'approved' && alloc && (
@@ -1009,7 +1053,7 @@ export function AdminPage() {
                                 fontWeight: 600,
                               }}
                             >
-                              <Lock size={12} />
+                              <Lock size={12} aria-hidden="true" />
                               Aguardando “Aposta feita”
                             </span>
                             <div style={{ marginTop: 2 }}>
@@ -1076,8 +1120,9 @@ export function AdminPage() {
                                   }
                                 }}
                                 title="Salvar nº da cota no bilhete"
+                                aria-label={`Salvar número da cota do bilhete de ${u.displayName}`}
                               >
-                                <Save size={13} />
+                                <Save size={13} aria-hidden="true" />
                               </button>
                             </div>
                             <button
@@ -1085,6 +1130,12 @@ export function AdminPage() {
                               className={`btn btn-sm ${u.receiptDelivered ? 'btn-primary' : 'btn-secondary'}`}
                               style={{ padding: '4px 9px', fontSize: '0.76rem' }}
                               disabled={busyId === u.uid}
+                              aria-pressed={Boolean(u.receiptDelivered)}
+                              aria-label={
+                                u.receiptDelivered
+                                  ? `Desmarcar entrega em mãos do bilhete de ${u.displayName}`
+                                  : `Marcar entrega em mãos do bilhete de ${u.displayName}`
+                              }
                               onClick={async () => {
                                 setBusyId(u.uid);
                                 try {
@@ -1112,7 +1163,7 @@ export function AdminPage() {
                                 }
                               }}
                             >
-                              <CheckCircle2 size={12} />
+                              <CheckCircle2 size={12} aria-hidden="true" />
                               {u.receiptDelivered
                                 ? 'Entregue em mãos ✓'
                                 : 'Marcar entregue em mãos'}
@@ -1130,7 +1181,7 @@ export function AdminPage() {
                                 disabled={busyId === u.uid}
                                 onClick={() => handleApprove(u)}
                               >
-                                <Check size={13} />
+                                <Check size={13} aria-hidden="true" />
                                 Aprovar
                               </button>
                               <button
@@ -1139,7 +1190,7 @@ export function AdminPage() {
                                 disabled={busyId === u.uid}
                                 onClick={() => handleReject(u)}
                               >
-                                <XCircle size={13} />
+                                <XCircle size={13} aria-hidden="true" />
                                 Recusar
                               </button>
                             </>
@@ -1154,7 +1205,7 @@ export function AdminPage() {
                                 disabled={busyId === u.uid}
                                 onClick={() => handleConfirmPix(u)}
                               >
-                                <CheckCircle2 size={13} />
+                                <CheckCircle2 size={13} aria-hidden="true" />
                                 Confirmar PIX
                               </button>
                             )}
@@ -1166,7 +1217,7 @@ export function AdminPage() {
                               disabled={busyId === u.uid}
                               onClick={() => handleMarkRefunded(u)}
                             >
-                              <Undo2 size={13} />
+                              <Undo2 size={13} aria-hidden="true" />
                               Marcar Estornado
                             </button>
                           )}
@@ -1197,9 +1248,9 @@ export function AdminPage() {
                                     : 'payment_reminder'
                               )
                             }
-                            title="Enviar e-mail via Apps Script"
+                            aria-label={`Enviar e-mail para ${u.displayName}`}
                           >
-                            <Send size={13} />
+                            <Send size={13} aria-hidden="true" />
                           </button>
 
                           {u.approvalStatus === 'approved' &&
@@ -1219,9 +1270,14 @@ export function AdminPage() {
                                     `${u.displayName} ${!u.isModerator ? 'agora é moderador(a)' : 'não é mais moderador(a)'}.`
                                   );
                                 }}
-                                title="Alternar permissão de moderador"
+                                aria-label={
+                                  u.isModerator
+                                    ? `Remover permissão de moderador de ${u.displayName}`
+                                    : `Promover ${u.displayName} a moderador`
+                                }
+                                aria-pressed={u.isModerator}
                               >
-                                <ShieldCheck size={13} />
+                                <ShieldCheck size={13} aria-hidden="true" />
                               </button>
                             )}
                         </div>
@@ -1237,7 +1293,12 @@ export function AdminPage() {
 
       {/* ABA 2: ETAPAS & FECHAMENTO */}
       {activeTab === 'stages' && (
-        <div className="stack-md">
+        <div
+          className="stack-md"
+          role="tabpanel"
+          id="admin-panel-stages"
+          aria-labelledby="admin-tab-stages"
+        >
           <section className="card stack-md" id="admin-timeline-controller">
             <div className="row-between">
               <div>
@@ -1257,7 +1318,11 @@ export function AdminPage() {
               </span>
             </div>
 
-            <div className="phase-selector-grid">
+            <div
+              className="phase-selector-grid"
+              role="group"
+              aria-label="Selecionar fase atual da timeline"
+            >
               {POOL_PHASES.map((phase, idx) => {
                 const activeIdx = getPhaseIndex(publicConfig.currentPhase);
                 const cls =
@@ -1273,9 +1338,11 @@ export function AdminPage() {
                     className={`phase-btn ${cls}`}
                     disabled={busyId === 'set_phase'}
                     onClick={() => handleSetPhase(phase.id)}
+                    aria-pressed={idx === activeIdx}
+                    aria-label={`Etapa ${idx + 1} de ${POOL_PHASES.length}: ${phase.label}${idx === activeIdx ? ' (fase atual)' : idx < activeIdx ? ' (concluída)' : ''}`}
                     id={`btn-phase-${phase.id}`}
                   >
-                    <span className="phase-btn-step">
+                    <span className="phase-btn-step" aria-hidden="true">
                       {idx < activeIdx
                         ? `✓ Etapa ${idx + 1}`
                         : idx === activeIdx
@@ -1378,8 +1445,11 @@ export function AdminPage() {
               ).map(([key, title, desc]) => (
                 <div key={key} className="toggle-row">
                   <div>
-                    <strong>{title}</strong>
-                    <div style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}>
+                    <strong id={`stage-label-${key}`}>{title}</strong>
+                    <div
+                      id={`stage-desc-${key}`}
+                      style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}
+                    >
                       {desc}
                     </div>
                   </div>
@@ -1388,6 +1458,8 @@ export function AdminPage() {
                       type="checkbox"
                       checked={pubForm.flags[key]}
                       onChange={(e) => handleToggleStage(key, e.target.checked)}
+                      aria-labelledby={`stage-label-${key}`}
+                      aria-describedby={`stage-desc-${key}`}
                       id={`toggle-stage-${key}`}
                     />
                     <span className="switch-slider" />
@@ -1451,10 +1523,10 @@ export function AdminPage() {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Participante</th>
-                      <th>Pagou</th>
-                      <th>Final</th>
-                      <th>Estorno</th>
+                      <th scope="col">Participante</th>
+                      <th scope="col">Pagou</th>
+                      <th scope="col">Final</th>
+                      <th scope="col">Estorno</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1482,7 +1554,7 @@ export function AdminPage() {
                   onClick={handleClosePool}
                   id="btn-close-pool"
                 >
-                  <Lock size={15} />
+                  <Lock size={15} aria-hidden="true" />
                   {busyId === 'close_pool'
                     ? 'Fechando bolão...'
                     : 'Fechar Bolão e Gerar Estornos'}
@@ -1495,7 +1567,7 @@ export function AdminPage() {
                   onClick={handleReopenPool}
                   id="btn-reopen-pool"
                 >
-                  <RefreshCw size={15} />
+                  <RefreshCw size={15} aria-hidden="true" />
                   Reabrir Bolão (descongelar rateio)
                 </button>
               )}
@@ -1507,7 +1579,12 @@ export function AdminPage() {
 
       {/* ABA 3: JOGOS & SORTEIO */}
       {activeTab === 'games' && (
-        <div className="grid-2">
+        <div
+          className="grid-2"
+          role="tabpanel"
+          id="admin-panel-games"
+          aria-labelledby="admin-tab-games"
+        >
           <section className="card stack-md">
             <h2>Cadastrar Novo Volante (6 a 20 dezenas)</h2>
             <form onSubmit={handleAddGame} className="stack-sm">
@@ -1535,15 +1612,21 @@ export function AdminPage() {
                   placeholder="04 12 19 27 38 45 59"
                   value={newGameNumbers}
                   onChange={(e) => setNewGameNumbers(e.target.value)}
+                  aria-describedby="admin-game-numbers-hint"
                 />
-                <span className="field-hint">
+                <span id="admin-game-numbers-hint" className="field-hint">
                   Reconhecidas: <strong>{parsedNewGame.length}</strong> dezena(s)
                   válida(s)
                 </span>
               </div>
 
               {newGameOddsPreview && (
-                <div className="card-mint" style={{ fontSize: '0.84rem' }}>
+                <div
+                  className="card-mint"
+                  style={{ fontSize: '0.84rem' }}
+                  role="status"
+                  aria-live="polite"
+                >
                   <strong>
                     Prévia das probabilidades ({newGameOddsPreview.numberCount}{' '}
                     dezenas ={' '}
@@ -1577,7 +1660,7 @@ export function AdminPage() {
                 className="btn btn-primary"
                 id="btn-add-game"
               >
-                <Plus size={15} />
+                <Plus size={15} aria-hidden="true" />
                 Adicionar Volante
               </button>
             </form>
@@ -1605,7 +1688,7 @@ export function AdminPage() {
                   className="btn btn-gold"
                   id="btn-save-draw"
                 >
-                  <Save size={15} />
+                  <Save size={15} aria-hidden="true" />
                   Salvar Resultado Oficial
                 </button>
               </form>
@@ -1627,13 +1710,14 @@ export function AdminPage() {
                     <button
                       type="button"
                       className="btn btn-danger btn-sm"
+                      aria-label={`Excluir volante ${g.label}`}
                       onClick={async () => {
                         await dataService.deleteGame(g.id, actorEmail);
                         await refreshAll();
                         showToast('info', 'Volante removido.');
                       }}
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={13} aria-hidden="true" />
                     </button>
                   </div>
                 ))
@@ -1645,14 +1729,21 @@ export function AdminPage() {
 
       {/* ABA 4: CONFIGURAÇÕES & APPS SCRIPT */}
       {activeTab === 'settings' && (
-        <form onSubmit={handleSaveAllSettings} className="stack-md">
+        <form
+          onSubmit={handleSaveAllSettings}
+          className="stack-md"
+          role="tabpanel"
+          id="admin-panel-settings"
+          aria-labelledby="admin-tab-settings"
+        >
           <div className="grid-2">
             <section className="card stack-sm">
               <h2>Parâmetros do Bolão</h2>
               <div className="grid-2" style={{ gap: 12 }}>
                 <div className="field">
-                  <label>Nome do bolão</label>
+                  <label htmlFor="admin-pool-name">Nome do bolão</label>
                   <input
+                    id="admin-pool-name"
                     type="text"
                     className="input"
                     value={pubForm.poolName}
@@ -1662,8 +1753,9 @@ export function AdminPage() {
                   />
                 </div>
                 <div className="field">
-                  <label>Edição / Ano</label>
+                  <label htmlFor="admin-edition">Edição / Ano</label>
                   <input
+                    id="admin-edition"
                     type="text"
                     className="input"
                     value={pubForm.edition}
@@ -1676,8 +1768,9 @@ export function AdminPage() {
 
               <div className="grid-3" style={{ gap: 10 }}>
                 <div className="field">
-                  <label>Valor cota (R$)</label>
+                  <label htmlFor="admin-quota-price">Valor cota (R$)</label>
                   <input
+                    id="admin-quota-price"
                     type="number"
                     min={1}
                     step="0.01"
@@ -1692,8 +1785,9 @@ export function AdminPage() {
                   />
                 </div>
                 <div className="field">
-                  <label>Total cotas</label>
+                  <label htmlFor="admin-total-quotas">Total cotas</label>
                   <input
+                    id="admin-total-quotas"
                     type="number"
                     min={1}
                     className="input mono"
@@ -1707,8 +1801,9 @@ export function AdminPage() {
                   />
                 </div>
                 <div className="field">
-                  <label>Máx./pessoa</label>
+                  <label htmlFor="admin-max-quotas">Máx./pessoa</label>
                   <input
+                    id="admin-max-quotas"
                     type="number"
                     min={1}
                     className="input mono"
@@ -1725,8 +1820,11 @@ export function AdminPage() {
 
               <div className="grid-2" style={{ gap: 10 }}>
                 <div className="field">
-                  <label>Data limite para registro</label>
+                  <label htmlFor="admin-reg-deadline">
+                    Data limite para registro
+                  </label>
                   <input
+                    id="admin-reg-deadline"
                     type="date"
                     className="input"
                     value={pubForm.registrationDeadline}
@@ -1739,8 +1837,11 @@ export function AdminPage() {
                   />
                 </div>
                 <div className="field">
-                  <label>Data limite para pagamento PIX</label>
+                  <label htmlFor="admin-pay-deadline">
+                    Data limite para pagamento PIX
+                  </label>
                   <input
+                    id="admin-pay-deadline"
                     type="date"
                     className="input"
                     value={pubForm.paymentDeadline}
@@ -1753,8 +1854,11 @@ export function AdminPage() {
                   />
                 </div>
                 <div className="field">
-                  <label>Data de realizar a aposta</label>
+                  <label htmlFor="admin-bet-date">
+                    Data de realizar a aposta
+                  </label>
                   <input
+                    id="admin-bet-date"
                     type="date"
                     className="input"
                     value={pubForm.betPlacementDate}
@@ -1767,8 +1871,9 @@ export function AdminPage() {
                   />
                 </div>
                 <div className="field">
-                  <label>Data do sorteio</label>
+                  <label htmlFor="admin-draw-date">Data do sorteio</label>
                   <input
+                    id="admin-draw-date"
                     type="date"
                     className="input"
                     value={pubForm.drawDate}
@@ -1816,8 +1921,11 @@ export function AdminPage() {
               </div>
 
               <div className="field">
-                <label>Nota extra na Página de Regras</label>
+                <label htmlFor="admin-rules-extra">
+                  Nota extra na Página de Regras
+                </label>
                 <textarea
+                  id="admin-rules-extra"
                   className="textarea"
                   value={pubForm.rulesExtraNotes}
                   onChange={(e) =>
@@ -1863,7 +1971,7 @@ export function AdminPage() {
                       }}
                       id="btn-copy-invite-link"
                     >
-                      <Link2 size={14} />
+                      <Link2 size={14} aria-hidden="true" />
                       Copiar link (?convite=)
                     </button>
                   </div>
@@ -1877,8 +1985,9 @@ export function AdminPage() {
                   </span>
                 </div>
                 <div className="field">
-                  <label>Chave PIX do organizador</label>
+                  <label htmlFor="admin-pix-key">Chave PIX do organizador</label>
                   <input
+                    id="admin-pix-key"
                     type="text"
                     className="input mono"
                     value={payForm.pixKey}
@@ -1889,8 +1998,11 @@ export function AdminPage() {
                 </div>
                 <div className="grid-2" style={{ gap: 10 }}>
                   <div className="field">
-                    <label>Nome do recebedor (até 25 chars)</label>
+                    <label htmlFor="admin-merchant-name">
+                      Nome do recebedor (até 25 chars)
+                    </label>
                     <input
+                      id="admin-merchant-name"
                       type="text"
                       className="input"
                       maxLength={25}
@@ -1901,8 +2013,11 @@ export function AdminPage() {
                     />
                   </div>
                   <div className="field">
-                    <label>Cidade (até 15 chars)</label>
+                    <label htmlFor="admin-merchant-city">
+                      Cidade (até 15 chars)
+                    </label>
                     <input
+                      id="admin-merchant-city"
                       type="text"
                       className="input"
                       maxLength={15}
@@ -1914,8 +2029,11 @@ export function AdminPage() {
                   </div>
                 </div>
                 <div className="field">
-                  <label>Instruções exibidas acima do QR Code</label>
+                  <label htmlFor="admin-pix-instructions">
+                    Instruções exibidas acima do QR Code
+                  </label>
                   <textarea
+                    id="admin-pix-instructions"
                     className="textarea"
                     value={payForm.instructions}
                     onChange={(e) =>
@@ -1969,7 +2087,7 @@ export function AdminPage() {
                     onClick={handleTestAppsScript}
                     id="btn-test-apps-script"
                   >
-                    <Mail size={14} />
+                    <Mail size={14} aria-hidden="true" />
                     {busyId === 'test_email'
                       ? 'Testando envio...'
                       : `Testar e-mail para ${actorEmail}`}
@@ -1986,7 +2104,7 @@ export function AdminPage() {
               disabled={busyId === 'save_settings'}
               id="btn-save-all-settings"
             >
-              <Save size={16} />
+              <Save size={16} aria-hidden="true" />
               {busyId === 'save_settings'
                 ? 'Salvando...'
                 : 'Salvar todas as configurações'}
@@ -1997,20 +2115,28 @@ export function AdminPage() {
 
       {/* ABA 5: AUDITORIA */}
       {activeTab === 'audit' && (
-        <section className="card stack-md">
+        <section
+          className="card stack-md"
+          role="tabpanel"
+          id="admin-panel-audit"
+          aria-labelledby="admin-tab-audit"
+        >
           <h2>Histórico de Auditoria dos Moderadores</h2>
           {auditLogs.length === 0 ? (
             <p style={{ color: 'var(--ink-muted)' }}>Nenhum evento registrado.</p>
           ) : (
             <div className="table-wrap">
               <table className="data-table">
+                <caption className="sr-only">
+                  Histórico de ações realizadas pelos moderadores do bolão
+                </caption>
                 <thead>
                   <tr>
-                    <th>Data/Hora</th>
-                    <th>Ação</th>
-                    <th>Moderador</th>
-                    <th>Alvo</th>
-                    <th>Detalhes</th>
+                    <th scope="col">Data/Hora</th>
+                    <th scope="col">Ação</th>
+                    <th scope="col">Moderador</th>
+                    <th scope="col">Alvo</th>
+                    <th scope="col">Detalhes</th>
                   </tr>
                 </thead>
                 <tbody>

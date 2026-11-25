@@ -10,7 +10,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import { formatDateBr } from '../lib/appsScript';
-import { getPhaseIndex, POOL_PHASES } from '../lib/phases';
+import { getPhaseIndex, getPhaseMeta, POOL_PHASES } from '../lib/phases';
 import type { PoolPhase, PublicConfig } from '../types';
 
 interface TimelineProps {
@@ -19,34 +19,36 @@ interface TimelineProps {
 }
 
 function getPhaseIcon(phase: PoolPhase, size: number) {
+  const props = { size, 'aria-hidden': true as const };
   switch (phase) {
     case 'registration':
-      return <CalendarCheck size={size} />;
+      return <CalendarCheck {...props} />;
     case 'registration_closed':
-      return <Lock size={size} />;
+      return <Lock {...props} />;
     case 'consolidating_payments':
-      return <Coins size={size} />;
+      return <Coins {...props} />;
     case 'bet_placed':
-      return <Ticket size={size} />;
+      return <Ticket {...props} />;
     case 'delivering_tickets':
-      return <Gift size={size} />;
+      return <Gift {...props} />;
     case 'draw':
-      return <Trophy size={size} />;
+      return <Trophy {...props} />;
     case 'claiming_prize':
-      return <HandCoins size={size} />;
+      return <HandCoins {...props} />;
     case 'retired':
-      return <Palmtree size={size} />;
+      return <Palmtree {...props} />;
   }
 }
 
 export function Timeline({ config, compact = false }: TimelineProps) {
   const activeIdx = getPhaseIndex(config.currentPhase);
+  const currentMeta = getPhaseMeta(config.currentPhase);
 
   return (
-    <div
+    <ol
       className={`tl-track${compact ? ' tl-track-compact' : ''}`}
-      role="list"
-      aria-label="Linha do tempo de evolução do bolão MegaCorn"
+      style={{ listStyle: 'none', margin: 0 }}
+      aria-label={`Linha do tempo de evolução do bolão ${config.poolName}: atualmente na etapa ${activeIdx + 1} de ${POOL_PHASES.length}, ${currentMeta.label}`}
     >
       {POOL_PHASES.map((step, index) => {
         const status =
@@ -55,6 +57,13 @@ export function Timeline({ config, compact = false }: TimelineProps) {
             : index === activeIdx
               ? 'current'
               : 'upcoming';
+
+        const statusSrText =
+          status === 'past'
+            ? 'Concluída'
+            : status === 'current'
+              ? 'Fase atual'
+              : 'Próxima etapa';
 
         const leftPassed = index > 0 && index <= activeIdx;
         const rightPassed = index < POOL_PHASES.length - 1 && index < activeIdx;
@@ -70,14 +79,19 @@ export function Timeline({ config, compact = false }: TimelineProps) {
               isFirst ? ' tl-balloon-first' : ''
             }${isLast ? ' tl-balloon-last' : ''}`}
           >
+            <span className="sr-only">
+              Etapa {index + 1} de {POOL_PHASES.length} ({statusSrText}):
+            </span>
             <div className="tl-balloon-head">
               <span className="tl-balloon-title">{step.label}</span>
               {status === 'current' && (
-                <span className="tl-now-pill">Agora</span>
+                <span className="tl-now-pill" aria-hidden="true">
+                  Agora
+                </span>
               )}
               {status === 'past' && (
-                <span className="tl-done-pill" aria-label="Concluído">
-                  <Check size={11} strokeWidth={3} />
+                <span className="tl-done-pill" aria-hidden="true">
+                  <Check size={11} strokeWidth={3} aria-hidden="true" />
                 </span>
               )}
             </div>
@@ -96,9 +110,8 @@ export function Timeline({ config, compact = false }: TimelineProps) {
         );
 
         return (
-          <div
+          <li
             key={step.id}
-            role="listitem"
             aria-current={status === 'current' ? 'step' : undefined}
             className={`tl-item tl-item-${status} tl-item-${position}`}
           >
@@ -113,23 +126,18 @@ export function Timeline({ config, compact = false }: TimelineProps) {
             </div>
 
             {/* Trilho + Ponto circular com ícone */}
-            <div className="tl-rail">
+            <div className="tl-rail" aria-hidden="true">
               {!isFirst && (
                 <span
                   className={`tl-seg tl-seg-left${leftPassed ? ' tl-seg-passed' : ''}`}
-                  aria-hidden="true"
                 />
               )}
               {!isLast && (
                 <span
                   className={`tl-seg tl-seg-right${rightPassed ? ' tl-seg-passed' : ''}`}
-                  aria-hidden="true"
                 />
               )}
-              <div
-                className={`tl-node tl-node-${status}`}
-                title={`${index + 1}. ${step.label}`}
-              >
+              <div className={`tl-node tl-node-${status}`}>
                 {getPhaseIcon(step.id, iconSize)}
               </div>
             </div>
@@ -142,14 +150,13 @@ export function Timeline({ config, compact = false }: TimelineProps) {
                   {balloon}
                 </>
               )}
-              {/* Versão mobile (exibida apenas em telas pequenas para itens 'top') */}
               {position === 'top' && (
                 <div className="tl-mobile-only">{balloon}</div>
               )}
             </div>
-          </div>
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 }

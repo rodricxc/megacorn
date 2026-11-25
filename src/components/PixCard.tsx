@@ -151,9 +151,15 @@ export function PixCard({
         <div className="pix-layout">
           <div className="pix-qr-box">
             {qrDataUrl ? (
-              <img src={qrDataUrl} alt="QR Code PIX MegaCorn" />
+              <img
+                src={qrDataUrl}
+                alt={`QR Code PIX do ${poolName} no valor de ${formatCurrencyBr(amount)} para ${paymentConfig.merchantName}`}
+              />
             ) : (
-              <div style={{ padding: 32, color: 'var(--ink-muted)' }}>
+              <div
+                role="status"
+                style={{ padding: 32, color: 'var(--ink-muted)' }}
+              >
                 Gerando QR Code...
               </div>
             )}
@@ -174,8 +180,16 @@ export function PixCard({
             </div>
 
             <div className="field">
-              <label>PIX Copia e Cola (valor já preenchido)</label>
-              <div className="pix-code-box">{pixPayload}</div>
+              <label htmlFor="pix-copia-cola-box">
+                PIX Copia e Cola (valor já preenchido)
+              </label>
+              <div
+                id="pix-copia-cola-box"
+                className="pix-code-box"
+                aria-label="Código PIX Copia e Cola"
+              >
+                {pixPayload}
+              </div>
               <div className="row">
                 <button
                   type="button"
@@ -183,9 +197,18 @@ export function PixCard({
                   onClick={() => handleCopy(pixPayload)}
                   id="btn-copy-pix-code"
                 >
-                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                  {copied ? (
+                    <Check size={16} aria-hidden="true" />
+                  ) : (
+                    <Copy size={16} aria-hidden="true" />
+                  )}
                   {copied ? 'Código PIX copiado!' : 'Copiar PIX Copia e Cola'}
                 </button>
+                <span className="sr-only" role="status" aria-live="polite">
+                  {copied
+                    ? 'Código PIX Copia e Cola copiado para a área de transferência.'
+                    : ''}
+                </span>
                 <span className="field-hint">
                   Recebedor: <strong>{paymentConfig.merchantName}</strong> ({paymentConfig.merchantCity})
                 </span>
@@ -221,14 +244,19 @@ export function PixCard({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               maxLength={140}
+              aria-describedby="pix-note-hint"
             />
-            <span className="field-hint">
+            <span id="pix-note-hint" className="field-hint">
               Se o PIX foi feito a partir de uma conta bancária em nome de outra
               pessoa (ou conta PJ), informe o <strong>nome do titular da conta</strong>{' '}
               acima para facilitar a identificação no extrato.
             </span>
           </div>
-          {error && <div className="alert alert-danger">{error}</div>}
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+          )}
           <div>
             <button
               type="submit"
@@ -236,7 +264,7 @@ export function PixCard({
               disabled={submitting}
               id="btn-report-pix-paid"
             >
-              <Send size={15} />
+              <Send size={15} aria-hidden="true" />
               {submitting ? 'Registrando...' : 'Já fiz o PIX'}
             </button>
           </div>
@@ -244,7 +272,7 @@ export function PixCard({
       )}
 
       {profile.paymentStatus === 'reported' && (
-        <div className="alert alert-warning">
+        <div className="alert alert-warning" role="status" aria-live="polite">
           <div>
             <strong>Aviso de PIX registrado!</strong> Os organizadores vão
             conferir o recebimento no extrato e confirmar sua participação em

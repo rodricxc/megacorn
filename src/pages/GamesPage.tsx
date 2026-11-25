@@ -82,7 +82,9 @@ export function GamesPage() {
   if (authLoading || dataLoading) {
     return (
       <div className="container">
-        <div className="card">Carregando jogos e probabilidades do MegaCorn...</div>
+        <div className="card" role="status" aria-busy="true">
+          Carregando jogos e probabilidades do MegaCorn...
+        </div>
       </div>
     );
   }
@@ -227,10 +229,19 @@ export function GamesPage() {
         </div>
 
         {activeDrawNumbers.length > 0 && (
-          <div className="stack-sm">
-            <div className="balls-row">
+          <div className="stack-sm" role="status" aria-live="polite">
+            <div
+              className="balls-row"
+              role="list"
+              aria-label="Dezenas sorteadas em conferência"
+            >
               {activeDrawNumbers.map((n) => (
-                <span key={n} className="lottery-ball draw">
+                <span
+                  key={n}
+                  role="listitem"
+                  className="lottery-ball draw"
+                  aria-label={`Dezena sorteada ${String(n).padStart(2, '0')}`}
+                >
                   {String(n).padStart(2, '0')}
                 </span>
               ))}
@@ -257,12 +268,12 @@ export function GamesPage() {
       {/* Lista de volantes */}
       <section className="stack-md">
         <div className="row" style={{ gap: 8 }}>
-          <Clover size={20} color="var(--luck-500)" />
+          <Clover size={20} color="var(--luck-500)" aria-hidden="true" />
           <h2>Volantes do Bolão ({games.length})</h2>
         </div>
 
         {games.length === 0 ? (
-          <div className="card">
+          <div className="card" role="status">
             Nenhum volante cadastrado ainda pelos organizadores.
           </div>
         ) : (
@@ -270,7 +281,11 @@ export function GamesPage() {
             {checkedGames.map(({ game, odds, check }) => {
               const hitSet = new Set(check?.matchedNumbers || []);
               return (
-                <article key={game.id} className="card stack-sm">
+                <article
+                  key={game.id}
+                  className="card stack-sm"
+                  aria-label={game.label}
+                >
                   <div className="row-between">
                     <div>
                       <h3>{game.label}</h3>
@@ -299,23 +314,37 @@ export function GamesPage() {
                     </div>
                   </div>
 
-                  <div className="balls-row">
-                    {game.numbers.map((num) => (
-                      <span
-                        key={num}
-                        className={`lottery-ball${hitSet.has(num) ? ' hit' : ''}`}
-                      >
-                        {String(num).padStart(2, '0')}
-                      </span>
-                    ))}
+                  <div
+                    className="balls-row"
+                    role="list"
+                    aria-label={`Dezenas do ${game.label}`}
+                  >
+                    {game.numbers.map((num) => {
+                      const isHit = hitSet.has(num);
+                      const labelNum = String(num).padStart(2, '0');
+                      return (
+                        <span
+                          key={num}
+                          role="listitem"
+                          className={`lottery-ball${isHit ? ' hit' : ''}`}
+                          aria-label={
+                            isHit
+                              ? `Dezena ${labelNum}, acertou`
+                              : `Dezena ${labelNum}`
+                          }
+                        >
+                          {labelNum}
+                        </span>
+                      );
+                    })}
                   </div>
 
                   {check &&
                     (check.senaCount > 0 ||
                       check.quinaCount > 0 ||
                       check.quadraCount > 0) && (
-                      <div className="alert alert-success">
-                        <Trophy size={17} />
+                      <div className="alert alert-success" role="status">
+                        <Trophy size={17} aria-hidden="true" />
                         <strong>
                           Volante premiado!{' '}
                           {check.senaCount > 0 && `${check.senaCount} Sena(s) `}

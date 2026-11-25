@@ -12,9 +12,9 @@ export function StatusBanner() {
       <div className="container status-banner-inner">
         <div className="row" style={{ gap: 8 }}>
           {flags.poolClosed ? (
-            <Lock size={16} />
+            <Lock size={16} aria-hidden="true" />
           ) : (
-            <Megaphone size={16} />
+            <Megaphone size={16} aria-hidden="true" />
           )}
           <span style={{ fontWeight: 600 }}>
             {flags.poolClosed
@@ -25,7 +25,7 @@ export function StatusBanner() {
 
         <div className="stage-chips">
           <span className="badge badge-unicorn">
-            <Sparkles size={12} />
+            <Sparkles size={12} aria-hidden="true" />
             Fase: {phaseMeta.label}
           </span>
           <span

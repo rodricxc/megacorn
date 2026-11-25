@@ -45,7 +45,7 @@ export function Navbar() {
             className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
             id="nav-rules"
           >
-            <BookOpen size={15} />
+            <BookOpen size={15} aria-hidden="true" />
             Regras
           </NavLink>
 
@@ -58,7 +58,7 @@ export function Navbar() {
                 }
                 id="nav-my-quota"
               >
-                <Ticket size={15} />
+                <Ticket size={15} aria-hidden="true" />
                 Minha Cota
               </NavLink>
 
@@ -70,7 +70,7 @@ export function Navbar() {
                   }
                   id="nav-board"
                 >
-                  <Users size={15} />
+                  <Users size={15} aria-hidden="true" />
                   Placar
                 </NavLink>
               )}
@@ -83,7 +83,7 @@ export function Navbar() {
                   }
                   id="nav-games"
                 >
-                  <Clover size={15} />
+                  <Clover size={15} aria-hidden="true" />
                   Jogos &amp; Chances
                 </NavLink>
               )}
@@ -96,7 +96,7 @@ export function Navbar() {
                   }
                   id="nav-admin"
                 >
-                  <ShieldCheck size={15} />
+                  <ShieldCheck size={15} aria-hidden="true" />
                   Admin
                 </NavLink>
               )}
@@ -110,7 +110,7 @@ export function Navbar() {
               className="badge badge-unicorn"
               title="Rodando localmente em modo demonstração sem Firebase configurado"
             >
-              <Sparkles size={13} />
+              <Sparkles size={13} aria-hidden="true" />
               Modo Demo
             </span>
           )}
@@ -119,7 +119,7 @@ export function Navbar() {
             <div className="row" style={{ gap: 8 }}>
               <span
                 className="badge badge-neutral"
-                title={`Conectado como ${authUser.email}`}
+                aria-label={`Conectado como ${profile?.displayName || authUser.email}`}
               >
                 {profile?.displayName || authUser.email}
               </span>
@@ -128,9 +128,9 @@ export function Navbar() {
                 className="btn btn-secondary btn-sm"
                 onClick={handleSignOut}
                 id="btn-sign-out"
-                title="Encerrar sessão neste navegador"
+                aria-label="Sair da conta neste navegador"
               >
-                <LogOut size={14} />
+                <LogOut size={14} aria-hidden="true" />
                 Sair
               </button>
             </div>
