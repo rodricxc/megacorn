@@ -279,7 +279,7 @@ export function MyQuotaPage() {
 
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary btn-mobile-full"
               disabled={saving || !registrationsOpen}
               id="btn-submit-registration"
             >
@@ -624,7 +624,7 @@ export function MyQuotaPage() {
           <div>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary btn-mobile-full"
               disabled={saving}
               id="btn-save-profile"
             >

@@ -126,14 +126,18 @@ export function HomePage() {
                 <>
                   <Link
                     to="/minha-cota"
-                    className="btn btn-primary"
+                    className="btn btn-primary btn-mobile-full"
                     id="hero-go-my-quota"
                   >
                     Ir para Minha Cota
                     <ArrowRight size={16} aria-hidden="true" />
                   </Link>
                   {profile?.isModerator && (
-                    <Link to="/admin" className="btn btn-unicorn" id="hero-go-admin">
+                    <Link
+                      to="/admin"
+                      className="btn btn-unicorn btn-mobile-full"
+                      id="hero-go-admin"
+                    >
                       <ShieldCheck size={16} aria-hidden="true" />
                       Abrir Painel Admin
                     </Link>
@@ -143,7 +147,7 @@ export function HomePage() {
 
               <Link
                 to="/regras"
-                className="btn btn-secondary"
+                className="btn btn-secondary btn-mobile-full"
                 id="hero-read-rules"
               >
                 <BookOpen size={16} aria-hidden="true" />
@@ -350,7 +354,7 @@ export function HomePage() {
 
                 <button
                   type="submit"
-                  className="btn btn-primary"
+                  className="btn btn-primary btn-mobile-full"
                   disabled={
                     sending || (!registrationsOpen && !confirmedExistingAccount)
                   }

@@ -124,7 +124,7 @@ export function MagicLinkHandler() {
         </p>
 
         <form onSubmit={handleConfirmEmail} className="row" style={{ alignItems: 'flex-end' }}>
-          <div className="field" style={{ flex: 1, minWidth: 240 }}>
+          <div className="field" style={{ flex: 1, minWidth: 'min(240px, 100%)' }}>
             <label htmlFor="magic-return-email">Seu e-mail pessoal</label>
             <input
               id="magic-return-email"
@@ -141,7 +141,7 @@ export function MagicLinkHandler() {
           {state === 'needs_email' ? (
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary btn-mobile-full"
               disabled={submitting}
               id="btn-confirm-magic-email"
             >
@@ -150,7 +150,7 @@ export function MagicLinkHandler() {
           ) : (
             <button
               type="button"
-              className="btn btn-gold"
+              className="btn btn-gold btn-mobile-full"
               disabled={submitting || resendCooldown > 0}
               onClick={handleResend}
               id="btn-resend-magic-link"

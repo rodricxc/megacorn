@@ -166,7 +166,11 @@ export function BoardPage() {
             Nenhum participante aprovado ainda.
           </div>
         ) : (
-          <div className="table-wrap">
+          <>
+            <p className="mobile-scroll-hint" aria-hidden="true">
+              Deslize a tabela para o lado para ver todas as colunas →
+            </p>
+            <div className="table-wrap">
             <table className="data-table board-table">
               <caption className="sr-only">
                 Lista de participantes aprovados no bolão {publicConfig.poolName}, ordenada por inscrição
@@ -295,7 +299,8 @@ export function BoardPage() {
                 })}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
       </section>
     </div>

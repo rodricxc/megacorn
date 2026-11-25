@@ -206,7 +206,7 @@ export function GamesPage() {
         </div>
 
         <div className="row" style={{ alignItems: 'flex-end' }}>
-          <div className="field" style={{ flex: 1, minWidth: 260 }}>
+          <div className="field" style={{ flex: 1, minWidth: 'min(260px, 100%)' }}>
             <label htmlFor="checker-draw-input">
               Dezenas sorteadas (6 números de 01 a 60 separados por espaço ou vírgula)
             </label>
@@ -222,7 +222,7 @@ export function GamesPage() {
           {simInput && (
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-secondary btn-mobile-full"
               onClick={() => setSimInput('')}
               id="btn-clear-checker"
             >
@@ -250,7 +250,7 @@ export function GamesPage() {
               ))}
             </div>
 
-            <div className="grid-3">
+            <div className="checker-totals-grid">
               <div className="card-gold">
                 <div className="stat-label">Senas (6 acertos)</div>
                 <div className="stat-value">{totals.senas}</div>

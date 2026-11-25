@@ -35,7 +35,7 @@ export function RulesPage() {
           </div>
           <Link
             to={authUser ? '/minha-cota' : '/'}
-            className="btn btn-primary"
+            className="btn btn-primary btn-mobile-full"
             id="rules-cta-participate"
           >
             {authUser
@@ -371,7 +371,7 @@ export function RulesPage() {
         </div>
         <Link
           to={authUser ? '/minha-cota' : '/'}
-          className="btn btn-primary btn-sm"
+          className="btn btn-primary btn-sm btn-mobile-full"
         >
           {authUser ? 'Ver Minha Cota' : 'Fazer login'}
         </Link>

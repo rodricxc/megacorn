@@ -118,8 +118,9 @@ export function Navbar() {
           {authUser ? (
             <div className="row" style={{ gap: 8 }}>
               <span
-                className="badge badge-neutral"
+                className="badge badge-neutral nav-user-badge"
                 aria-label={`Conectado como ${profile?.displayName || authUser.email}`}
+                title={profile?.displayName || authUser.email}
               >
                 {profile?.displayName || authUser.email}
               </span>

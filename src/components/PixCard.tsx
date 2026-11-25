@@ -177,7 +177,7 @@ export function PixCard({
               {pixPayload && (
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-secondary btn-sm btn-mobile-full"
                   aria-expanded={qrExpanded}
                   aria-controls="pix-qr-collapsible-content"
                   onClick={() => setQrExpanded((prev) => !prev)}
@@ -251,7 +251,7 @@ export function PixCard({
                     <div className="row">
                       <button
                         type="button"
-                        className="btn btn-gold"
+                        className="btn btn-gold btn-mobile-full"
                         onClick={() => handleCopy(pixPayload)}
                         id="btn-copy-pix-code"
                       >
@@ -321,7 +321,7 @@ export function PixCard({
           <div>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary btn-mobile-full"
               disabled={submitting}
               id="btn-report-pix-paid"
             >
