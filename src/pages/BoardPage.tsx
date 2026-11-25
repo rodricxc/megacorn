@@ -167,16 +167,16 @@ export function BoardPage() {
           </div>
         ) : (
           <div className="table-wrap">
-            <table className="data-table">
+            <table className="data-table board-table">
               <caption className="sr-only">
                 Lista de participantes aprovados no bolão {publicConfig.poolName}, ordenada por inscrição
               </caption>
               <thead>
                 <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">Participante</th>
-                  <th scope="col">Cotas Pedidas</th>
-                  <th scope="col">
+                  <th scope="col" className="col-rank">#</th>
+                  <th scope="col" className="col-name">Participante</th>
+                  <th scope="col" className="col-num">Cotas Pedidas</th>
+                  <th scope="col" className="col-num-wide">
                     {publicConfig.flags.poolClosed ? (
                       'Cotas Finais'
                     ) : (
@@ -187,7 +187,7 @@ export function BoardPage() {
                     )}
                   </th>
                   <th scope="col">Pagamento PIX</th>
-                  <th scope="col">Nº Cota Bilhete / Entrega</th>
+                  <th scope="col" className="col-wrap-th">Nº Cota Bilhete / Entrega</th>
                   <th scope="col">Observação</th>
                 </tr>
               </thead>
@@ -197,17 +197,17 @@ export function BoardPage() {
                   const isMe = entry.uid === authUser?.uid;
                   return (
                     <tr key={entry.uid}>
-                      <td className="mono" style={{ color: 'var(--ink-muted)' }}>
+                      <td className="mono col-rank" style={{ color: 'var(--ink-muted)' }}>
                         {idx + 1}
                       </td>
-                      <td>
+                      <td className="col-name">
                         <strong>{entry.displayName}</strong>{' '}
                         {isMe && (
                           <span className="badge badge-unicorn">Você</span>
                         )}
                       </td>
-                      <td className="mono">{entry.requestedQuotas}</td>
-                      <td>
+                      <td className="mono col-num">{entry.requestedQuotas}</td>
+                      <td className="col-num-wide">
                         {alloc?.isWaitlisted ? (
                           <span className="badge badge-warning">
                             Fila #{alloc.waitlistPosition}
@@ -220,12 +220,9 @@ export function BoardPage() {
                           </span>
                         )}
                         {alloc && alloc.excessQuotas > 0 && !alloc.isWaitlisted && (
-                          <span
-                            className="field-hint"
-                            style={{ marginLeft: 6 }}
-                          >
+                          <div className="field-hint" style={{ marginTop: 2 }}>
                             (-{alloc.excessQuotas} exced.)
-                          </span>
+                          </div>
                         )}
                       </td>
                       <td>

@@ -775,6 +775,42 @@ textarea:focus-visible,
   color: var(--ink-muted);
 }
 
+/* Placar: mais espaço para o nome do participante e colunas numéricas compactas */
+.board-table .col-rank {
+  width: 38px;
+  padding-left: 10px;
+  padding-right: 6px;
+  text-align: center;
+}
+
+.board-table .col-name {
+  min-width: 240px;
+  width: 34%;
+}
+
+.board-table .col-num {
+  width: 92px;
+  padding-left: 8px;
+  padding-right: 8px;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.board-table .col-num-wide {
+  width: 114px;
+  padding-left: 8px;
+  padding-right: 8px;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.board-table .col-wrap-th {
+  white-space: normal;
+  line-height: 1.2;
+}
+
 .data-table td {
   padding: 12px 14px;
   border-bottom: 1px solid hsl(42, 24%, 92%);
