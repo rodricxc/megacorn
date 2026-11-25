@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { MagicLinkHandler } from './components/MagicLinkHandler';
 import { Navbar } from './components/Navbar';
@@ -22,11 +22,18 @@ const ROUTE_TITLES: Record<string, string> = {
 
 function RouteAccessibilityManager() {
   const location = useLocation();
+  const isFirstRender = useRef(true);
   const title = ROUTE_TITLES[location.pathname] || 'MegaCorn — Bolão do Time';
 
   useEffect(() => {
     document.title = title;
-  }, [title]);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    document.getElementById('main-content')?.focus({ preventScroll: true });
+  }, [title, location.pathname]);
 
   return (
     <div

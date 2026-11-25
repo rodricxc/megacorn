@@ -1,11 +1,4 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { calculateEquityAllocation } from '../lib/equity';
 import { dataService } from '../services';
 import {
@@ -17,35 +10,13 @@ import type {
   AuditLogEntry,
   BoardEntry,
   DrawResult,
-  EquityCalculationResult,
   LotteryGame,
   PaymentConfig,
   PoolStats,
   PublicConfig,
   UserProfile,
 } from '../types';
-
-interface AppContextValue {
-  isDemoMode: boolean;
-  authLoading: boolean;
-  dataLoading: boolean;
-  authUser: AuthUser | null;
-  profile: UserProfile | null;
-  publicConfig: PublicConfig;
-  paymentConfig: PaymentConfig | null;
-  adminConfig: AdminConfig | null;
-  boardEntries: BoardEntry[];
-  poolStats: PoolStats;
-  allUsers: UserProfile[];
-  games: LotteryGame[];
-  drawResult: DrawResult;
-  auditLogs: AuditLogEntry[];
-  boardEquity: EquityCalculationResult;
-  refreshAll: () => Promise<void>;
-  signOut: () => Promise<void>;
-}
-
-const AppContext = createContext<AppContextValue | null>(null);
+import { AppContext, type AppContextValue } from './useApp';
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [authLoading, setAuthLoading] = useState(true);
@@ -147,9 +118,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [authUser]);
 
   useEffect(() => {
-    if (!authLoading) {
-      void refreshAll();
-    }
+    if (authLoading) return;
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (!cancelled) {
+        void refreshAll();
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [authLoading, refreshAll]);
 
   const boardEquity = useMemo(() => {
@@ -220,10 +198,4 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
-}
-
-export function useApp(): AppContextValue {
-  const ctx = useContext(AppContext);
-  if (!ctx) throw new Error('useApp deve ser usado dentro de AppProvider');
-  return ctx;
 }

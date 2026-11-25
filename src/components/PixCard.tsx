@@ -67,7 +67,6 @@ export function PixCard({
   useEffect(() => {
     let active = true;
     if (!showQrContent || !pixPayload) {
-      setQrDataUrl('');
       return;
     }
     QRCode.toDataURL(pixPayload, {
@@ -85,6 +84,8 @@ export function PixCard({
       active = false;
     };
   }, [showQrContent, pixPayload]);
+
+  const visibleQrDataUrl = showQrContent && pixPayload ? qrDataUrl : '';
 
   async function handleCopy(text: string) {
     try {
@@ -202,9 +203,9 @@ export function PixCard({
             showQrContent && (
               <div className="pix-layout" id="pix-qr-collapsible-content">
                 <div className="pix-qr-box">
-                  {qrDataUrl ? (
+                  {visibleQrDataUrl ? (
                     <img
-                      src={qrDataUrl}
+                      src={visibleQrDataUrl}
                       alt={`QR Code PIX do ${poolName} no valor de ${formatCurrencyBr(amount)} para ${paymentConfig.merchantName}`}
                     />
                   ) : (

@@ -5,9 +5,9 @@ import {
   Sparkles,
   Trophy,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import {
   calculateGameOdds,
   calculatePoolCombinedOdds,
@@ -28,15 +28,18 @@ export function GamesPage() {
     drawResult,
   } = useApp();
 
-  const [simInput, setSimInput] = useState('');
+  const formattedOfficialDraw = drawResult.numbers
+    .map((n) => String(n).padStart(2, '0'))
+    .join(' ');
+  const [prevOfficialDraw, setPrevOfficialDraw] = useState(formattedOfficialDraw);
+  const [simInput, setSimInput] = useState(formattedOfficialDraw);
 
-  useEffect(() => {
-    if (drawResult.numbers.length > 0) {
-      setSimInput(
-        drawResult.numbers.map((n) => String(n).padStart(2, '0')).join(' ')
-      );
+  if (formattedOfficialDraw !== prevOfficialDraw) {
+    setPrevOfficialDraw(formattedOfficialDraw);
+    if (formattedOfficialDraw) {
+      setSimInput(formattedOfficialDraw);
     }
-  }, [drawResult.numbers]);
+  }
 
   const activeDrawNumbers = useMemo(
     () => parseLotteryNumbers(simInput).slice(0, 6),
@@ -94,7 +97,7 @@ export function GamesPage() {
       <div className="container">
         <div className="card stack-sm">
           <div className="row" style={{ gap: 10 }}>
-            <EyeOff size={22} />
+            <EyeOff size={22} aria-hidden="true" />
             <h1>Jogos temporariamente ocultos</h1>
           </div>
           <p style={{ color: 'var(--ink-secondary)' }}>
@@ -121,7 +124,7 @@ export function GamesPage() {
           </div>
           {combinedOdds.multiplierVsSingleBet > 0 && (
             <span className="badge badge-warning" style={{ fontSize: '0.86rem', padding: '6px 12px' }}>
-              <Sparkles size={14} />
+              <Sparkles size={14} aria-hidden="true" />
               {combinedOdds.multiplierVsSingleBet.toLocaleString('pt-BR')}x mais
               chance que 1 jogo simples
             </span>
@@ -174,7 +177,7 @@ export function GamesPage() {
 
         {combinedOdds.hasOverlappingGames && (
           <div className="alert alert-info">
-            <Calculator size={17} style={{ flexShrink: 0, marginTop: 2 }} />
+            <Calculator size={17} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
             <span>
               Alguns volantes compartilham 6 ou mais dezenas entre si — a chance
               combinada exibida acima ajusta essa sobreposição por aproximação
@@ -188,7 +191,7 @@ export function GamesPage() {
       <section className="card stack-md" id="result-checker-card">
         <div className="row-between">
           <div className="row" style={{ gap: 8 }}>
-            <Trophy size={20} color="var(--corn-600)" />
+            <Trophy size={20} color="var(--corn-600)" aria-hidden="true" />
             <h2>Conferidor de Resultado</h2>
           </div>
           {drawResult.numbers.length === 6 ? (

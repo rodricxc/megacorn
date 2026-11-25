@@ -8,7 +8,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 
 export function Navbar() {
   const { authUser, profile, publicConfig, isDemoMode, signOut } = useApp();

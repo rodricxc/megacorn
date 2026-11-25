@@ -8,11 +8,11 @@ import {
   Sparkles,
   Undo2,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { CpfField } from '../components/CpfField';
 import { PixCard } from '../components/PixCard';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import { formatCurrencyBr } from '../lib/appsScript';
 import { isValidCpf, sanitizeCpf } from '../lib/cpf';
 import { getRememberedInviteCode } from '../lib/session';
@@ -31,23 +31,27 @@ export function MyQuotaPage() {
   } = useApp();
 
   // Form de primeiro cadastro (pré-preenche código vindo da URL ou do login)
+  const [prevProfile, setPrevProfile] = useState(profile);
   const [inviteCode, setInviteCode] = useState(getRememberedInviteCode());
-  const [displayName, setDisplayName] = useState('');
-  const [requestedQuotas, setRequestedQuotas] = useState(1);
-  const [cpf, setCpf] = useState('');
+  const [displayName, setDisplayName] = useState(profile?.displayName || '');
+  const [requestedQuotas, setRequestedQuotas] = useState(
+    profile?.requestedQuotas || 1
+  );
+  const [cpf, setCpf] = useState(profile?.cpf || '');
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: 'success' | 'danger';
     text: string;
   } | null>(null);
 
-  useEffect(() => {
+  if (profile !== prevProfile) {
+    setPrevProfile(profile);
     if (profile) {
       setDisplayName(profile.displayName);
       setRequestedQuotas(profile.requestedQuotas);
       setCpf(profile.cpf || '');
     }
-  }, [profile]);
+  }
 
   if (!authLoading && !authUser) {
     return <Navigate to="/" replace />;
@@ -354,13 +358,13 @@ export function MyQuotaPage() {
           <div className="row" style={{ gap: 8 }}>
             {profile.approvalStatus === 'approved' && (
               <span className="badge badge-success">
-                <CheckCircle2 size={14} />
+                <CheckCircle2 size={14} aria-hidden="true" />
                 Participante Aprovado
               </span>
             )}
             {profile.approvalStatus === 'pending' && (
               <span className="badge badge-warning">
-                <Clock size={14} />
+                <Clock size={14} aria-hidden="true" />
                 Aguardando Aprovação
               </span>
             )}
@@ -376,7 +380,7 @@ export function MyQuotaPage() {
         {/* Alertas de status especiais */}
         {profile.approvalStatus === 'pending' && (
           <div className="alert alert-info">
-            <Clock size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+            <Clock size={18} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
               <strong>Seu cadastro está aguardando aprovação dos moderadores.</strong>
               <p style={{ marginTop: 4 }}>
@@ -390,7 +394,7 @@ export function MyQuotaPage() {
 
         {profile.refundStatus === 'pending' && (
           <div className="alert alert-warning">
-            <Undo2 size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+            <Undo2 size={18} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
               <strong>
                 Estorno pendente: {formatCurrencyBr(profile.refundAmount)} (
@@ -406,7 +410,7 @@ export function MyQuotaPage() {
 
         {profile.refundStatus === 'completed' && (
           <div className="alert alert-success">
-            <CheckCircle2 size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+            <CheckCircle2 size={18} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
               <strong>
                 Estorno concluído: {formatCurrencyBr(profile.refundAmount)} (
@@ -418,7 +422,7 @@ export function MyQuotaPage() {
 
         {myAlloc?.isWaitlisted && (
           <div className="alert alert-warning">
-            <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+            <AlertTriangle size={18} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
               <strong>
                 Você está na Fila de Espera (posição #{myAlloc.waitlistPosition}).
@@ -498,7 +502,7 @@ export function MyQuotaPage() {
           <div
             className={`alert ${profile.receiptDelivered ? 'alert-success' : 'alert-info'}`}
           >
-            <CheckCircle2 size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+            <CheckCircle2 size={18} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
               <strong>
                 {profile.assignedTicketNumbers
@@ -634,8 +638,10 @@ export function MyQuotaPage() {
       {publicConfig.organizerContact && (
         <section className="card-cream stack-xs" id="my-quota-contact-card">
           <div className="row" style={{ gap: 8 }}>
-            <MessageCircle size={17} color="var(--luck-600)" />
-            <h3>Precisa de ajuda ou quer ajustar após o PIX?</h3>
+            <MessageCircle size={17} color="var(--luck-600)" aria-hidden="true" />
+            <h2 style={{ fontSize: '1.08rem' }}>
+              Precisa de ajuda ou quer ajustar após o PIX?
+            </h2>
           </div>
           <p style={{ color: 'var(--ink-secondary)', fontSize: '0.9rem' }}>
             {publicConfig.organizerContact}

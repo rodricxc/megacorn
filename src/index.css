@@ -15,16 +15,16 @@
   /* Ink / Text */
   --ink-primary: hsl(158, 42%, 14%);
   --ink-secondary: hsl(158, 18%, 34%);
-  --ink-muted: hsl(158, 12%, 48%);
+  --ink-muted: hsl(158, 14%, 39%);
 
   /* Brand Palette: Corn Gold, Emerald Luck/Money, Iridescent Unicorn */
   --corn-500: hsl(42, 95%, 48%);
   --corn-600: hsl(38, 92%, 40%);
   --corn-700: hsl(34, 88%, 31%);
 
-  --luck-500: hsl(156, 72%, 34%);
-  --luck-600: hsl(156, 76%, 27%);
-  --luck-700: hsl(158, 74%, 20%);
+  --luck-500: hsl(156, 74%, 29%);
+  --luck-600: hsl(156, 76%, 23%);
+  --luck-700: hsl(158, 74%, 18%);
 
   --unicorn-500: hsl(268, 65%, 54%);
   --unicorn-600: hsl(268, 68%, 44%);

@@ -24,10 +24,10 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import {
   buildWhatsappReminderText,
   formatCurrencyBr,
@@ -142,23 +142,31 @@ export function AdminPage() {
   const [auditPageSize, setAuditPageSize] = useState<number>(100);
   const [auditPage, setAuditPage] = useState<number>(1);
 
-  useEffect(() => {
+  const [prevPublicConfig, setPrevPublicConfig] = useState(publicConfig);
+  if (publicConfig !== prevPublicConfig) {
+    setPrevPublicConfig(publicConfig);
     setPubForm(publicConfig);
-  }, [publicConfig]);
+  }
 
-  useEffect(() => {
+  const [prevPaymentConfig, setPrevPaymentConfig] = useState(paymentConfig);
+  if (paymentConfig !== prevPaymentConfig) {
+    setPrevPaymentConfig(paymentConfig);
     if (paymentConfig) setPayForm(paymentConfig);
-  }, [paymentConfig]);
+  }
 
-  useEffect(() => {
+  const [prevAdminConfig, setPrevAdminConfig] = useState(adminConfig);
+  if (adminConfig !== prevAdminConfig) {
+    setPrevAdminConfig(adminConfig);
     if (adminConfig) setAdmForm(adminConfig);
-  }, [adminConfig]);
+  }
 
-  useEffect(() => {
+  const [prevDrawNumbers, setPrevDrawNumbers] = useState(drawResult.numbers);
+  if (drawResult.numbers !== prevDrawNumbers) {
+    setPrevDrawNumbers(drawResult.numbers);
     setDrawInput(
       drawResult.numbers.map((n) => String(n).padStart(2, '0')).join(' ')
     );
-  }, [drawResult.numbers]);
+  }
 
   const approvedUsers = useMemo(
     () => allUsers.filter((u) => u.approvalStatus === 'approved'),
@@ -991,6 +999,7 @@ export function AdminPage() {
           id="admin-panel-participants"
           aria-labelledby="admin-tab-participants"
         >
+          <h2 className="sr-only">Participantes e Pagamentos PIX</h2>
           <div className="row-between">
             <div className="row" style={{ flex: 1, minWidth: 260 }}>
               <input
@@ -1767,6 +1776,7 @@ export function AdminPage() {
                   <label className="switch">
                     <input
                       type="checkbox"
+                      role="switch"
                       checked={pubForm.flags[key]}
                       onChange={(e) => handleToggleStage(key, e.target.checked)}
                       aria-labelledby={`stage-label-${key}`}
@@ -1795,7 +1805,7 @@ export function AdminPage() {
                 />
               </div>
               <button type="submit" className="btn btn-secondary btn-sm">
-                <Save size={14} />
+                <Save size={14} aria-hidden="true" />
                 Atualizar mensagem do banner
               </button>
             </form>
@@ -1832,6 +1842,9 @@ export function AdminPage() {
             {closePreview.refunds.length > 0 && (
               <div className="table-wrap">
                 <table className="data-table">
+                  <caption className="sr-only">
+                    Prévia de estornos previstos ao fechar o bolão
+                  </caption>
                   <thead>
                     <tr>
                       <th scope="col">Participante</th>
@@ -2035,7 +2048,9 @@ export function AdminPage() {
             </div>
 
             <div className="card stack-sm">
-              <h3>Volantes cadastrados ({games.length})</h3>
+              <h2 style={{ fontSize: '1.12rem' }}>
+                Volantes cadastrados ({games.length})
+              </h2>
               {games.length === 0 ? (
                 <p style={{ color: 'var(--ink-muted)' }}>Nenhum jogo ainda.</p>
               ) : (

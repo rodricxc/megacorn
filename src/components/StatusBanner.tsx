@@ -1,5 +1,5 @@
 import { Lock, Megaphone, Sparkles } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import { getPhaseMeta } from '../lib/phases';
 
 export function StatusBanner() {

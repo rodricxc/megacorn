@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { Timeline } from '../components/Timeline';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import { formatCurrencyBr } from '../lib/appsScript';
 
 export function BoardPage() {
@@ -42,7 +42,7 @@ export function BoardPage() {
       <div className="container">
         <div className="card stack-sm">
           <div className="row" style={{ gap: 10 }}>
-            <EyeOff size={22} />
+            <EyeOff size={22} aria-hidden="true" />
             <h1>Placar temporariamente oculto</h1>
           </div>
           <p style={{ color: 'var(--ink-secondary)' }}>
@@ -79,7 +79,7 @@ export function BoardPage() {
             </p>
           </div>
           <span className="badge badge-unicorn">
-            <Lock size={13} />
+            <Lock size={13} aria-hidden="true" />
             Sem e-mails ou CPFs expostos
           </span>
         </div>
@@ -282,7 +282,7 @@ export function BoardPage() {
                             {publicConfig.flags.poolClosed &&
                             entry.paymentStatus === 'confirmed' ? (
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                <Sparkles size={12} /> Confirmado no rateio
+                                <Sparkles size={12} aria-hidden="true" /> Confirmado no rateio
                               </span>
                             ) : (
                               '—'

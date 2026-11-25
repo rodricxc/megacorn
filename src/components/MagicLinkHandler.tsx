@@ -14,7 +14,7 @@ export function MagicLinkHandler() {
   const navigate = useNavigate();
   const [state, setState] = useState<
     'idle' | 'checking' | 'needs_email' | 'error' | 'completed'
-  >('idle');
+  >(() => (window.location.search.includes('oobCode=') ? 'checking' : 'idle'));
   const [message, setMessage] = useState('');
   const [emailInput, setEmailInput] = useState(getRememberedSignInEmail() || '');
   const [submitting, setSubmitting] = useState(false);
@@ -23,7 +23,6 @@ export function MagicLinkHandler() {
 
   useEffect(() => {
     let active = true;
-    setState('checking');
     dataService.checkMagicLinkReturn().then((res) => {
       if (!active) return;
       if (res.status === 'none') {

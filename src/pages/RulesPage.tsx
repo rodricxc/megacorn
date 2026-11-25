@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Timeline } from '../components/Timeline';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import { formatCurrencyBr, formatDateBr } from '../lib/appsScript';
 
 export function RulesPage() {
@@ -354,7 +354,7 @@ export function RulesPage() {
 
       {publicConfig.organizerContact && (
         <section className="card-mint stack-xs" id="rules-contact-section">
-          <h3>Contato dos Organizadores</h3>
+          <h2 style={{ fontSize: '1.08rem' }}>Contato dos Organizadores</h2>
           <p style={{ color: 'var(--ink-secondary)', fontSize: '0.92rem' }}>
             {publicConfig.organizerContact}
           </p>

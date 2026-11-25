@@ -32,12 +32,15 @@ export function ConfirmDialog({
   const descId = useId();
   const inputId = useId();
   const [typedText, setTypedText] = useState('');
+  const dialogRef = useRef<HTMLDivElement>(null);
   const cancelBtnRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
     const focusTimer = window.setTimeout(() => {
       if (requireTypedText) {
@@ -51,6 +54,32 @@ export function ConfirmDialog({
       if (e.key === 'Escape' && !busy) {
         e.preventDefault();
         onCancel();
+        return;
+      }
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])'
+          )
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (
+            document.activeElement === first ||
+            !dialogRef.current.contains(document.activeElement)
+          ) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else if (
+          document.activeElement === last ||
+          !dialogRef.current.contains(document.activeElement)
+        ) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     }
 
@@ -58,6 +87,7 @@ export function ConfirmDialog({
     return () => {
       window.clearTimeout(focusTimer);
       window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
       previouslyFocused?.focus?.();
     };
   }, [open, busy, onCancel, requireTypedText]);
@@ -91,6 +121,7 @@ export function ConfirmDialog({
       }}
     >
       <div
+        ref={dialogRef}
         className="confirm-dialog card stack-md"
         role="alertdialog"
         aria-modal="true"
@@ -102,7 +133,7 @@ export function ConfirmDialog({
             className={`confirm-icon confirm-icon-${variant}`}
             aria-hidden="true"
           >
-            <AlertTriangle size={20} />
+            <AlertTriangle size={20} aria-hidden="true" />
           </span>
           <div className="stack-xs" style={{ flex: 1 }}>
             <h2 id={titleId} style={{ fontSize: '1.12rem' }}>

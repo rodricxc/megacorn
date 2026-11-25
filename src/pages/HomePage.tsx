@@ -14,7 +14,7 @@ import {
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Timeline } from '../components/Timeline';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import { formatCurrencyBr } from '../lib/appsScript';
 import {
   extractInviteCodeFromUrl,
