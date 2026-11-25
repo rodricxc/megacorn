@@ -807,7 +807,7 @@ export function AdminPage() {
   const cpfStoredCount = allUsers.filter((u) => Boolean(u.cpf)).length;
 
   return (
-    <div className="container stack-lg">
+    <div className="container container-wide stack-lg">
       <section className="card stack-md">
         <div className="row-between">
           <div>

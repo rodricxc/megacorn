@@ -204,6 +204,16 @@ textarea:focus-visible,
   padding: 0 20px;
 }
 
+.container-wide {
+  max-width: min(1680px, 96vw);
+  padding: 0 24px;
+}
+
+.container-wide .data-table th,
+.container-wide .data-table td {
+  padding: 10px 12px;
+}
+
 .main-content {
   flex: 1;
   padding: 28px 0 64px;
@@ -1382,6 +1392,11 @@ textarea:focus-visible,
 
   .card {
     padding: 18px;
+  }
+
+  .container-wide {
+    max-width: 100%;
+    padding: 0 14px;
   }
 }
 
