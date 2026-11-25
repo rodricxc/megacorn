@@ -1537,31 +1537,50 @@ export function AdminPage() {
                               </button>
                             )}
 
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={() =>
-                              dispatchEmail(
-                                u,
-                                u.refundStatus === 'pending'
-                                  ? 'refund_notice'
-                                  : u.paymentStatus === 'confirmed'
-                                    ? 'payment_confirmed'
-                                    : 'payment_reminder'
-                              )
-                            }
-                            aria-label={`Enviar e-mail para ${u.displayName}`}
-                          >
-                            <Send size={13} aria-hidden="true" />
-                          </button>
+                          {(() => {
+                            const emailAction: EmailActionType =
+                              u.refundStatus === 'pending'
+                                ? 'refund_notice'
+                                : u.paymentStatus === 'confirmed'
+                                  ? 'payment_confirmed'
+                                  : 'payment_reminder';
+                            const emailTooltip =
+                              emailAction === 'refund_notice'
+                                ? `Enviar e-mail: aviso de estorno pendente (${formatCurrencyBr(u.refundAmount)})`
+                                : emailAction === 'payment_confirmed'
+                                  ? `Enviar e-mail: confirmação de pagamento PIX (${u.paidQuotas} cota(s))`
+                                  : `Enviar e-mail: lembrete de pagamento PIX (${formatCurrencyBr(u.requestedQuotas * publicConfig.quotaPrice)})`;
+                            return (
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm has-tooltip"
+                                onClick={() => dispatchEmail(u, emailAction)}
+                                title={emailTooltip}
+                                data-tooltip={emailTooltip}
+                                aria-label={`${emailTooltip} para ${u.displayName}`}
+                              >
+                                <Send size={13} aria-hidden="true" />
+                              </button>
+                            );
+                          })()}
 
                           {u.approvalStatus === 'approved' &&
                             u.uid !== profile.uid && (
                               <button
                                 type="button"
-                                className="btn btn-ghost btn-sm"
+                                className="btn btn-ghost btn-sm has-tooltip"
                                 disabled={busyId === u.uid}
                                 onClick={() => handleToggleModerator(u)}
+                                title={
+                                  u.isModerator
+                                    ? 'Remover permissão de moderador'
+                                    : 'Promover a moderador'
+                                }
+                                data-tooltip={
+                                  u.isModerator
+                                    ? 'Remover permissão de moderador'
+                                    : 'Promover a moderador'
+                                }
                                 aria-label={
                                   u.isModerator
                                     ? `Remover permissão de moderador de ${u.displayName}`
