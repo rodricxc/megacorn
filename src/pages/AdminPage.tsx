@@ -11,6 +11,7 @@ import {
   Download,
   Eye,
   EyeOff,
+  Info,
   Link2,
   Lock,
   Mail,
@@ -32,7 +33,10 @@ import { useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useApp } from '../context/useApp';
-import { calculateAdminOverviewMetrics } from '../lib/adminMetrics';
+import {
+  calculateAdminOverviewMetrics,
+  getPaidQuotaDiscrepancy,
+} from '../lib/adminMetrics';
 import {
   buildWhatsappReminderText,
   formatCurrencyBr,
@@ -530,43 +534,6 @@ export function AdminPage() {
         }
       },
     });
-  }
-
-  function handleToggleModerator(user: UserProfile) {
-    const runToggle = async () => {
-      setBusyId(user.uid);
-      try {
-        await dataService.toggleModeratorRole(
-          user.uid,
-          !user.isModerator,
-          actorEmail
-        );
-        await refreshAll();
-        showToast(
-          'info',
-          `${user.displayName} ${!user.isModerator ? 'agora é moderador(a)' : 'não é mais moderador(a)'}.`
-        );
-      } finally {
-        setBusyId(null);
-      }
-    };
-
-    if (user.isModerator) {
-      setPendingConfirm({
-        title: `Remover moderador ${user.displayName}?`,
-        description:
-          'Esta pessoa perderá acesso ao painel /admin e às ações de moderação imediatamente.',
-        details: [
-          `Moderador(a): ${user.displayName} (${user.email})`,
-          'Lembre-se de trocar também o MEGACORN_SECRET no Apps Script se necessário.',
-        ],
-        confirmLabel: 'Remover moderador',
-        variant: 'danger',
-        onConfirm: runToggle,
-      });
-    } else {
-      void runToggle();
-    }
   }
 
   async function handleBatchReminderEmails() {
@@ -1668,6 +1635,20 @@ export function AdminPage() {
                 {filteredUsers.map((u) => {
                   const alloc = liveEquity.allocations.get(u.uid);
                   const cpfVisible = Boolean(revealedCpfs[u.uid]);
+                  const equityQuotas =
+                    u.approvalStatus === 'approved'
+                      ? publicConfig.flags.poolClosed
+                        ? (u.finalQuotas ?? alloc?.allocatedQuotas ?? 0)
+                        : (alloc?.allocatedQuotas ?? null)
+                      : null;
+                  const paidDiscrepancy = getPaidQuotaDiscrepancy({
+                    paymentStatus: u.paymentStatus,
+                    approvalStatus: u.approvalStatus,
+                    paidQuotas: u.paidQuotas,
+                    requestedQuotas: u.requestedQuotas,
+                    equityQuotas,
+                    poolClosed: publicConfig.flags.poolClosed,
+                  });
                   return (
                     <tr key={u.uid}>
                       <td>
@@ -1811,10 +1792,24 @@ export function AdminPage() {
                         </div>
                       </td>
                       <td>
-                        <div>
+                        <div className="row" style={{ gap: 6 }}>
                           {u.paymentStatus === 'confirmed' && (
                             <span className="badge badge-success">
                               Pago ({u.paidQuotas}c)
+                            </span>
+                          )}
+                          {paidDiscrepancy.hasDiscrepancy && (
+                            <span
+                              className="badge badge-warning has-tooltip has-tooltip-wrap"
+                              tabIndex={0}
+                              role="img"
+                              aria-label={paidDiscrepancy.summary}
+                              title={paidDiscrepancy.summary}
+                              data-tooltip={paidDiscrepancy.summary}
+                              style={{ cursor: 'help' }}
+                            >
+                              <Info size={13} aria-hidden="true" />
+                              Diferente
                             </span>
                           )}
                           {u.paymentStatus === 'reported' && (
@@ -2095,34 +2090,6 @@ export function AdminPage() {
                               </button>
                             );
                           })()}
-
-                          {u.approvalStatus === 'approved' &&
-                            u.uid !== profile.uid && (
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-sm has-tooltip"
-                                disabled={busyId === u.uid}
-                                onClick={() => handleToggleModerator(u)}
-                                title={
-                                  u.isModerator
-                                    ? 'Remover permissão de moderador'
-                                    : 'Promover a moderador'
-                                }
-                                data-tooltip={
-                                  u.isModerator
-                                    ? 'Remover permissão de moderador'
-                                    : 'Promover a moderador'
-                                }
-                                aria-label={
-                                  u.isModerator
-                                    ? `Remover permissão de moderador de ${u.displayName}`
-                                    : `Promover ${u.displayName} a moderador`
-                                }
-                                aria-pressed={u.isModerator}
-                              >
-                                <ShieldCheck size={13} aria-hidden="true" />
-                              </button>
-                            )}
                         </div>
                       </td>
                     </tr>

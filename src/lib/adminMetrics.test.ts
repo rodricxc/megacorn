@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { PublicConfig, UserProfile } from '../types';
-import { calculateAdminOverviewMetrics } from './adminMetrics';
+import {
+  calculateAdminOverviewMetrics,
+  getPaidQuotaDiscrepancy,
+} from './adminMetrics';
 import { calculateEquityAllocation, calculateRefundsOnClose } from './equity';
 
 const BASE_CONFIG: PublicConfig = {
@@ -192,5 +195,72 @@ describe('calculateAdminOverviewMetrics', () => {
     expect(metrics.remainingToConfirmQuotas).toBe(0);
     expect(metrics.projectedCloseRefundAmount).toBe(80.64);
     expect(metrics.projectedRefundUsersCount).toBe(2);
+  });
+});
+
+describe('getPaidQuotaDiscrepancy', () => {
+  it('returns false when payment is not confirmed or matches requested and equity', () => {
+    expect(
+      getPaidQuotaDiscrepancy({
+        paymentStatus: 'unpaid',
+        approvalStatus: 'approved',
+        paidQuotas: 0,
+        requestedQuotas: 2,
+        equityQuotas: 2,
+        poolClosed: false,
+      }).hasDiscrepancy
+    ).toBe(false);
+
+    expect(
+      getPaidQuotaDiscrepancy({
+        paymentStatus: 'confirmed',
+        approvalStatus: 'approved',
+        paidQuotas: 2,
+        requestedQuotas: 2,
+        equityQuotas: 2,
+        poolClosed: false,
+      }).hasDiscrepancy
+    ).toBe(false);
+  });
+
+  it('flags mismatch against requested quotas, equity quotas, or both', () => {
+    const reqDiff = getPaidQuotaDiscrepancy({
+      paymentStatus: 'confirmed',
+      approvalStatus: 'approved',
+      paidQuotas: 2,
+      requestedQuotas: 3,
+      equityQuotas: 2,
+      poolClosed: false,
+    });
+    expect(reqDiff.hasDiscrepancy).toBe(true);
+    expect(reqDiff.differsFromRequested).toBe(true);
+    expect(reqDiff.differsFromEquity).toBe(false);
+    expect(reqDiff.summary).toContain('3c pedida(s)');
+
+    const eqDiff = getPaidQuotaDiscrepancy({
+      paymentStatus: 'confirmed',
+      approvalStatus: 'approved',
+      paidQuotas: 3,
+      requestedQuotas: 3,
+      equityQuotas: 2,
+      poolClosed: false,
+    });
+    expect(eqDiff.hasDiscrepancy).toBe(true);
+    expect(eqDiff.differsFromRequested).toBe(false);
+    expect(eqDiff.differsFromEquity).toBe(true);
+    expect(eqDiff.summary).toContain('equidade atual');
+
+    const bothDiff = getPaidQuotaDiscrepancy({
+      paymentStatus: 'confirmed',
+      approvalStatus: 'approved',
+      paidQuotas: 1,
+      requestedQuotas: 3,
+      equityQuotas: 2,
+      poolClosed: true,
+    });
+    expect(bothDiff.hasDiscrepancy).toBe(true);
+    expect(bothDiff.differsFromRequested).toBe(true);
+    expect(bothDiff.differsFromEquity).toBe(true);
+    expect(bothDiff.summary).toContain('alocação final');
   });
 });

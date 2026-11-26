@@ -1591,6 +1591,13 @@ textarea:focus-visible,
   z-index: 30;
 }
 
+.has-tooltip-wrap::after {
+  white-space: normal;
+  width: 240px;
+  max-width: 270px;
+  text-align: left;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .has-tooltip:hover::after,
   .has-tooltip:focus-visible::after {

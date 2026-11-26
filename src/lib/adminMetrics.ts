@@ -246,3 +246,73 @@ export function calculateAdminOverviewMetrics(params: {
     quotaDistribution,
   };
 }
+
+export interface PaidDiscrepancyInfo {
+  hasDiscrepancy: boolean;
+  differsFromRequested: boolean;
+  differsFromEquity: boolean;
+  summary: string;
+}
+
+/**
+ * Detecta divergência entre as cotas marcadas como pagas (`paidQuotas`)
+ * e a quantidade pedida (`requestedQuotas`) ou alocada pela equidade/final.
+ */
+export function getPaidQuotaDiscrepancy(params: {
+  paymentStatus: UserProfile['paymentStatus'];
+  approvalStatus: UserProfile['approvalStatus'];
+  paidQuotas: number;
+  requestedQuotas: number;
+  equityQuotas: number | null;
+  poolClosed: boolean;
+}): PaidDiscrepancyInfo {
+  const {
+    paymentStatus,
+    approvalStatus,
+    paidQuotas,
+    requestedQuotas,
+    equityQuotas,
+    poolClosed,
+  } = params;
+
+  if (paymentStatus !== 'confirmed') {
+    return {
+      hasDiscrepancy: false,
+      differsFromRequested: false,
+      differsFromEquity: false,
+      summary: '',
+    };
+  }
+
+  const differsFromRequested = paidQuotas !== requestedQuotas;
+  const differsFromEquity =
+    approvalStatus === 'approved' &&
+    equityQuotas !== null &&
+    paidQuotas !== equityQuotas;
+
+  if (!differsFromRequested && !differsFromEquity) {
+    return {
+      hasDiscrepancy: false,
+      differsFromRequested: false,
+      differsFromEquity: false,
+      summary: '',
+    };
+  }
+
+  const equityLabel = poolClosed ? 'alocação final' : 'equidade atual';
+  let summary = '';
+  if (differsFromRequested && differsFromEquity) {
+    summary = `Divergência: marcado como pago ${paidQuotas}c, mas constam ${requestedQuotas}c pedida(s) e ${equityQuotas}c na ${equityLabel}.`;
+  } else if (differsFromRequested) {
+    summary = `Divergência: marcado como pago ${paidQuotas}c, diferente das ${requestedQuotas}c pedida(s).`;
+  } else {
+    summary = `Divergência: marcado como pago ${paidQuotas}c, diferente de ${equityQuotas}c pela ${equityLabel}.`;
+  }
+
+  return {
+    hasDiscrepancy: true,
+    differsFromRequested,
+    differsFromEquity,
+    summary,
+  };
+}
